@@ -1,3 +1,10 @@
 {
-  "extends": ["next/core-web-vitals", "standard", "plugin:tailwindcss/recommended","prettier"]
+  "extends": [
+    "next/core-web-vitals", 
+  "standard", 
+  "plugin:tailwindcss/recommended",
+  "prettier"],
+  "rules": {
+    // "no-unused-vars": ["off"]
+  }
 }
