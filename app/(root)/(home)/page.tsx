@@ -51,8 +51,8 @@ const questions = [
         },
       },
     ],
-    views: 100,
-    createdAt: new Date(),
+    views: 1500000,
+    createdAt: new Date("2023-12-28T08:46:04.085Z"),
   },
   {
     _id: "2",
