@@ -9,15 +9,20 @@ interface QuestionCardProps {
   title: string;
   description: string;
   tags: {
-    _id: string;
+    id: string;
     name: string;
   }[];
   author: {
-    _id: string;
+    id: string;
     name: string;
     picture: string;
   };
-  upvotes: number;
+  upvotes: {
+    id: string;
+    userId: string;
+    answerId: string | null;
+    questionId: string | null;
+  }[];
   answersCount: number;
   answers: Array<object>;
   views: number;
@@ -39,7 +44,7 @@ const QuestionCard = ({
     <div className="card-wrapper rounded-[10px] p-9 sm:px-11">
       <div className="flex flex-col-reverse items-start justify-between gap-5 sm:flex-row">
         <div>
-          <span className="subtle-regular text-dark400_light700 line-clamp-1 flex">
+          <span className="subtle-regular text-dark400_light700 line-clamp-1 flex sm:hidden">
             {/* {console.log(createdAt)} */}
             {getTimeStamp(createdAt)}
           </span>
@@ -53,7 +58,7 @@ const QuestionCard = ({
       </div>
       <div className="mt-3.5 flex flex-wrap gap-2">
         {tags.map((tag) => (
-          <RenderTags key={tag._id} tag={tag} />
+          <RenderTags key={tag.id} id={tag.id} name={tag.name} />
         ))}
       </div>
 
@@ -65,13 +70,13 @@ const QuestionCard = ({
           value={author.name}
           title={` asked ${getTimeStamp(createdAt)}`}
           isAuthor
-          href={`/profile/${author._id}`}
+          href={`/profile/${author.id}`}
           textStyles="body-medium text-dark400_light700"
         />
         <Metric
           imgUrl="/assets/icons/like.svg"
           alt="Upvotes"
-          value={upvotes}
+          value={upvotes.length}
           title=" Votes"
           textStyles="small-medium text-dark400_light800"
         />

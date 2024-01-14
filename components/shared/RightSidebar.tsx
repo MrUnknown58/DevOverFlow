@@ -36,56 +36,16 @@ const hotQuestions = [
   },
 ];
 const popularTags = [
-  {
-    _id: 1,
-    name: "NextJS",
-    count: 10,
-  },
-  {
-    _id: 2,
-    name: "ReactJS",
-    count: 10,
-  },
-  {
-    _id: 3,
-    name: "JavaScript",
-    count: 10,
-  },
-  {
-    _id: 4,
-    name: "TypeScript",
-    count: 10,
-  },
-  {
-    _id: 5,
-    name: "GraphQL",
-    count: 10,
-  },
-  {
-    _id: 6,
-    name: "Apollo",
-    count: 10,
-  },
-  {
-    _id: 7,
-    name: "Prisma",
-    count: 10,
-  },
-  {
-    _id: 8,
-    name: "MongoDB",
-    count: 10,
-  },
-  {
-    _id: 9,
-    name: "PostgreSQL",
-    count: 10,
-  },
-  {
-    _id: 10,
-    name: "MySQL",
-    count: 10,
-  },
+  { id: "1", name: "NextJS" },
+  { id: "2", name: "ReactJS" },
+  { id: "3", name: "JavaScript" },
+  { id: "4", name: "TypeScript" },
+  { id: "5", name: "GraphQL" },
+  { id: "6", name: "Apollo" },
+  { id: "7", name: "Prisma" },
+  { id: "8", name: "MongoDB" },
+  { id: "9", name: "PostgreSQL" },
+  { id: "10", name: "MySQL" },
 ];
 const RightSidebar = () => {
   return (
@@ -117,7 +77,7 @@ const RightSidebar = () => {
         <h3 className="h3-bold text-dark200_light900">Top Questions</h3>
         <div className="mt-7 flex flex-col gap-4">
           {popularTags.map((tag) => (
-            <RenderTags key={tag._id} tag={tag} showCount />
+            <RenderTags key={tag.id} name={tag.name} id={tag.id} showCount />
           ))}
         </div>
       </div>
