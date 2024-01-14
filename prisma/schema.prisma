@@ -64,7 +64,7 @@ model Answer {
 
 model User {
   id               String     @id @default(auto()) @map("_id") @db.ObjectId
-  clerkId          String?
+  clerkId          String     @unique
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
   email            String     @unique
