@@ -19,12 +19,20 @@ import { QuestionSchema } from "@/lib/validations";
 import * as z from "zod";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
+import { createQuestion } from "@/lib/actions/question.action";
+import { usePathname, useRouter } from "next/navigation";
 
 const type = "create";
 
-const Question = () => {
+interface QuestionProps {
+  userDetails: string;
+}
+
+const Question = ({ userDetails }: QuestionProps) => {
   const editorRef = useRef(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
   // const log = () => {
   //   if (editorRef.current) {
   //     console.log(editorRef.current.getContent());
@@ -41,7 +49,7 @@ const Question = () => {
   });
 
   // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof QuestionSchema>) {
+  async function onSubmit(values: z.infer<typeof QuestionSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     setIsSubmitting(true);
@@ -49,21 +57,36 @@ const Question = () => {
       // make an async call to the database
       // contain all data in values
       // if success, redirect to the home page
+      // await createQuestion({
+      //   title: values.title,
+      //   content: values.explanation,
+      //   tags: values.tags,
+      //   author: JSON.parse(mongoUserId),
+      //   path: pathname,
+      // });
+      await createQuestion({
+        title: values.title,
+        content: values.explanation,
+        tags: values.tags,
+        author: JSON.parse(userDetails),
+        path: pathname,
+      });
+      router.push("/");
     } catch (e) {
     } finally {
       setIsSubmitting(false);
     }
-    console.log(values);
+    // console.log(values);
   }
   const handleInputKeyDown = (
     e: React.KeyboardEvent<HTMLInputElement>,
     field: any
   ) => {
-    console.log(field);
+    // console.log(field);
     if (e.key === "Enter" && field.name === "tags") {
       e.preventDefault();
       const tagInput = e.target as HTMLInputElement;
-      const tagValue = e.target.value.trim();
+      const tagValue = tagInput.value.trim();
       if (tagValue !== "") {
         if (tagValue.length > 15)
           return form.setError("tags", {
@@ -127,8 +150,16 @@ const Question = () => {
                 <FormControl className="mt-3.5">
                   <Editor
                     apiKey={process.env.NEXT_PUBLIC_TINY_EDITOR_API_KEY}
-                    onInit={(evt, editor) => (editorRef.current = editor)}
+                    onInit={(evt, editor) => {
+                      // @ts-ignore
+                      editorRef.current = editor;
+                    }}
                     initialValue=""
+                    onBlur={field.onBlur}
+                    onEditorChange={(content, editor) => {
+                      field.onChange(content);
+                      // console.log(content);
+                    }}
                     init={{
                       height: 500,
                       menubar: false,
@@ -217,9 +248,7 @@ const Question = () => {
             disabled={isSubmitting}
           >
             {isSubmitting ? (
-              <>
-                {type === "create" ? "Posting..." : "Updating..."} Question...
-              </>
+              <>{type === "create" ? "Posting" : "Updating"} Question...</>
             ) : (
               <>{type === "create" ? "Ask a" : "Edit"} Question</>
             )}
