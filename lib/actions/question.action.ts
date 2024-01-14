@@ -2,7 +2,7 @@
 import prisma from "@/utils/prismdb";
 import { CreateQuestionParams, GetQuestionsParams } from "./shared.types";
 import { revalidatePath } from "next/cache";
-import { NextResponse } from "next/server";
+// import { NextResponse } from "next/server";
 
 export async function getQuestions(params: GetQuestionsParams) {
   try {
@@ -34,7 +34,8 @@ export async function getQuestions(params: GetQuestionsParams) {
     return questions;
   } catch (e) {
     console.log(e);
-    return new NextResponse("Internal Server Error", { status: 500 });
+    throw new Error("Internal Server Error: getQuestions");
+    // return new NextResponse("Internal Server Error", { status: 500 });
   }
 }
 
