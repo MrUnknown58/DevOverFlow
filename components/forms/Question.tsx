@@ -244,7 +244,7 @@ const Question = ({ userDetails }: QuestionProps) => {
           />
           <Button
             type="submit"
-            className="primary-gradient w-fit !text-light-900"
+            className="primary-gradient w-fit !text-light-900 disabled:bg-slate-400"
             disabled={isSubmitting}
           >
             {isSubmitting ? (
