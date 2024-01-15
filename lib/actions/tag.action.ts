@@ -1,6 +1,6 @@
 "use server";
 import prisma from "@/utils/prismdb";
-import { GetTopInteractedTagsParams } from "./shared.types";
+import { GetAllTagsParams, GetTopInteractedTagsParams } from "./shared.types";
 
 export async function getTopInterativeTags(params: GetTopInteractedTagsParams) {
   try {
@@ -25,6 +25,21 @@ export async function getTopInterativeTags(params: GetTopInteractedTagsParams) {
         name: "tag3",
       },
     ];
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+export async function getAllTags(params: GetAllTagsParams) {
+  try {
+    const tags = await prisma.tag.findMany({
+      // include: {
+      //   questions: true,
+      //   followers: true,
+      // },
+    });
+    return tags;
   } catch (e) {
     console.log(e);
     throw e;
