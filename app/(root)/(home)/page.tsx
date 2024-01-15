@@ -146,7 +146,7 @@ import React from "react";
 
 const Home = async () => {
   const questions = await getQuestions({});
-  console.log(questions);
+  // console.log(questions);
   return (
     <>
       <div className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">

@@ -64,11 +64,11 @@ const QuestionCard = ({
 
       <div className="mt-6 flex w-full flex-wrap justify-between gap-3">
         <Metric
-          // imgUrl={author.picture}
-          imgUrl="/assets/icons/user.svg"
+          imgUrl={author.picture}
+          // imgUrl="/assets/icons/user.svg"
           alt="user"
           value={author.name}
-          title={` asked ${getTimeStamp(createdAt)}`}
+          title={` - asked ${getTimeStamp(createdAt)}`}
           isAuthor
           href={`/profile/${author.id}`}
           textStyles="body-medium text-dark400_light700"
