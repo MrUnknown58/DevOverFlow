@@ -40,13 +40,13 @@ model Upvote {
 }
 
 model Downvote {
-  id         String   @id @default(auto()) @map("_id") @db.ObjectId
-  user       User     @relation(fields: [userId], references: [id])
-  userId     String   @db.ObjectId
-  Question   Question @relation(fields: [questionId], references: [id])
-  questionId String   @db.ObjectId
-  Answer     Answer?  @relation(fields: [answerId], references: [id])
-  answerId   String?  @db.ObjectId
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String    @db.ObjectId
+  Question   Question? @relation(fields: [questionId], references: [id])
+  questionId String?   @db.ObjectId
+  Answer     Answer?   @relation(fields: [answerId], references: [id])
+  answerId   String?   @db.ObjectId
 }
 
 model Answer {
@@ -59,7 +59,9 @@ model Answer {
   question   Question   @relation(fields: [questionId], references: [id])
   questionId String     @db.ObjectId
   upvotes    Upvote[]
+  upvoteId   String[]   @db.ObjectId
   downvotes  Downvote[]
+  downvoteId String[]   @db.ObjectId
 }
 
 model User {
@@ -78,7 +80,8 @@ model User {
   reputation       Int        @default(0)
   joinedAt         DateTime   @default(now())
   answers          Answer[]
-  Question         Question[]
+  savedQuestions   Question[]
+  savedQuestionId  String[]   @db.ObjectId
   upvotes          Upvote[]
   Downvote         Downvote[]
   Tag              Tag?       @relation(fields: [tagId], references: [id])

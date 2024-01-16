@@ -15,6 +15,9 @@ export async function getUserById({ userId }: GetUserByIdParams) {
       where: {
         clerkId: userId,
       },
+      include: {
+        savedQuestions: true,
+      },
     });
     return user;
   } catch (e) {
