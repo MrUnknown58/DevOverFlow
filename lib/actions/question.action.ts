@@ -49,6 +49,13 @@ export async function createQuestion(question: CreateQuestionParams) {
     // const questionId = await db.question.create(question);
     // return questionId;
     const { title, content, tags, author, path } = question;
+
+    const userTest = await prisma.user.findFirst({
+      where: {
+        id: author,
+      },
+    });
+    console.log(userTest);
     const questionId = await prisma.question.create({
       data: {
         title,
@@ -60,6 +67,13 @@ export async function createQuestion(question: CreateQuestionParams) {
         },
       },
     });
+
+    const user = await prisma.user.findFirst({
+      where: {
+        id: author,
+      },
+    });
+    console.log(user);
     const tagIds = [];
     for (const tag of tags) {
       const existingtag = await prisma.tag.upsert({
@@ -95,9 +109,9 @@ export async function createQuestion(question: CreateQuestionParams) {
         },
       },
     });
-    // console.log(newQuestion);
+    console.log(newQuestion);
     revalidatePath(path);
-    return newQuestion;
+    // return newQuestion;
   } catch (e) {
     console.log(e);
   }

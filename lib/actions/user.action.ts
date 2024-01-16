@@ -4,7 +4,9 @@ import {
   CreateUserParams,
   DeleteUserParams,
   GetAllUsersParams,
+  GetSavedQuestionsParams,
   GetUserByIdParams,
+  ToggleSaveQuestionParams,
   UpdateUserParams,
 } from "./shared.types";
 import { revalidatePath } from "next/cache";
@@ -14,9 +16,6 @@ export async function getUserById({ userId }: GetUserByIdParams) {
     const user = await prisma.user.findUnique({
       where: {
         clerkId: userId,
-      },
-      include: {
-        savedQuestions: true,
       },
     });
     return user;
@@ -121,6 +120,98 @@ export async function getAllUsers(params: GetAllUsersParams) {
     });
     console.log(users);
     return users;
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+export async function toggleSaveQuestion(params: ToggleSaveQuestionParams) {
+  try {
+    const { userId, questionId, path } = params;
+    const user = await prisma.user.findUnique({
+      where: {
+        id: userId,
+      },
+    });
+    if (!user) throw new Error("User not found");
+    console.log(user);
+    const isSaved = user.savedQuestionId.includes(questionId);
+    if (isSaved) {
+      // remove question from saved questions
+      const newSavedQuestions = user.savedQuestionId.filter(
+        (id) => id !== questionId
+      );
+      const updatedUser = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          savedQuestionId: newSavedQuestions,
+        },
+      });
+      console.log(updatedUser);
+      // return updatedUser;
+    } else {
+      // add question to saved questions
+      const updatedUser = await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          savedQuestionId: [...user.savedQuestionId, questionId],
+        },
+      });
+      console.log(updatedUser);
+      // return updatedUser;
+    }
+    revalidatePath(path);
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+export async function getSavedQuestions(params: GetSavedQuestionsParams) {
+  try {
+    // eslint-disable-next-line no-unused-vars
+    const { clerkId, filter, page = 1, pageSize = 10, searchQuery } = params;
+    const user = await prisma.user.findFirst({
+      where: {
+        clerkId,
+      },
+    });
+    if (!user) throw new Error("User not found");
+    const savedQuestions = await prisma.question.findMany({
+      where: {
+        id: {
+          in: user.savedQuestionId,
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            clerkId: true,
+            name: true,
+            picture: true,
+          },
+        },
+        answers: true,
+        upvotes: true,
+        downvotes: true,
+      },
+    });
+    return savedQuestions;
   } catch (e) {
     console.log(e);
     throw e;
