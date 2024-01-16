@@ -3,13 +3,13 @@ import prisma from "@/utils/prismdb";
 import {
   CreateUserParams,
   DeleteUserParams,
+  GetAllUsersParams,
   GetUserByIdParams,
   UpdateUserParams,
 } from "./shared.types";
 import { revalidatePath } from "next/cache";
 
 export async function getUserById({ userId }: GetUserByIdParams) {
-  console.log(userId);
   try {
     const user = await prisma.user.findUnique({
       where: {
@@ -94,6 +94,30 @@ export async function deleteUser({ clerkId }: DeleteUserParams) {
       },
     });
     return deletedUser;
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+export async function getAllUsers(params: GetAllUsersParams) {
+  try {
+    // const { page = 1, pageSize = 20, filter, searchQuery } = params;
+    const users = await prisma.user.findMany({
+      // select: {
+      //   id: true,
+      //   username: true,
+      //   name: true,
+      //   picture: true,
+      //   email: true,
+      //   createdAt: true,
+      // },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+    console.log(users);
+    return users;
   } catch (e) {
     console.log(e);
     throw e;
