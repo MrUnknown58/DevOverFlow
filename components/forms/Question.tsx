@@ -21,6 +21,7 @@ import { Badge } from "../ui/badge";
 import Image from "next/image";
 import { createQuestion } from "@/lib/actions/question.action";
 import { usePathname, useRouter } from "next/navigation";
+import { useTheme } from "@/context/ThemeProvider";
 
 const type = "create";
 
@@ -30,15 +31,11 @@ interface QuestionProps {
 
 const Question = ({ userDetails }: QuestionProps) => {
   const editorRef = useRef(null);
+  const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  // const log = () => {
-  //   if (editorRef.current) {
-  //     console.log(editorRef.current.getContent());
-  //   }
-  // };
-  // 1. Define your form.
+
   const form = useForm<z.infer<typeof QuestionSchema>>({
     resolver: zodResolver(QuestionSchema),
     defaultValues: {
@@ -186,6 +183,8 @@ const Question = ({ userDetails }: QuestionProps) => {
                         "alignright alignjustify | bullist numlist ",
                       content_style:
                         "body { font-family:Inter; font-size:16px }",
+                      skin: theme === "dark" ? "oxide-dark" : "oxide",
+                      content_css: theme === "dark" ? "dark" : "light",
                     }}
                   />
                 </FormControl>

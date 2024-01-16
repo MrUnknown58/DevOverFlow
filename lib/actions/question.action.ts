@@ -1,6 +1,10 @@
 "use server";
 import prisma from "@/utils/prismdb";
-import { CreateQuestionParams, GetQuestionsParams } from "./shared.types";
+import {
+  CreateQuestionParams,
+  GetQuestionByIdParams,
+  GetQuestionsParams,
+} from "./shared.types";
 import { revalidatePath } from "next/cache";
 // import { NextResponse } from "next/server";
 
@@ -79,7 +83,7 @@ export async function createQuestion(question: CreateQuestionParams) {
       });
       tagIds.push(existingtag.id);
     }
-    console.log(tagIds);
+    // console.log(tagIds);
     const newQuestion = await prisma.question.update({
       where: {
         id: questionId.id,
@@ -90,9 +94,42 @@ export async function createQuestion(question: CreateQuestionParams) {
         },
       },
     });
-    console.log(newQuestion);
+    // console.log(newQuestion);
     revalidatePath(path);
     return newQuestion;
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+export async function getQuestionById(params: GetQuestionByIdParams) {
+  try {
+    const { questionId } = params;
+    const question = await prisma.question.findUnique({
+      where: {
+        id: questionId,
+      },
+      include: {
+        upvotes: true,
+        downvotes: true,
+        author: {
+          select: {
+            id: true,
+            clerkId: true,
+            name: true,
+            picture: true,
+          },
+        },
+        // answers: true,
+        tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    });
+    return question;
   } catch (e) {
     console.log(e);
   }
