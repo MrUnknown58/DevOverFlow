@@ -55,10 +55,7 @@ const Question = async ({ params, searchParams }: any) => {
                 question.downvotes.filter((v) => v.userId === user.id).length >
                 0
               }
-              hasSaved={
-                user.savedQuestions.filter((q) => q.id === question.id).length >
-                0
-              }
+              hasSaved={user.savedQuestionId.includes(question.id)}
             />
           </div>
         </div>
