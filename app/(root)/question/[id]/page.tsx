@@ -20,6 +20,7 @@ const Question = async ({ params, searchParams }: any) => {
   const { userId } = auth();
   if (!userId) redirect("/sign-in");
   const user = await getUserById({ userId });
+  if (!user) redirect("/sign-in");
   if (!question) return <></>;
   return (
     <>
@@ -41,7 +42,24 @@ const Question = async ({ params, searchParams }: any) => {
             </p>
           </Link>
           <div className="flex justify-end">
-            <Votes />
+            <Votes
+              type="question"
+              itemId={JSON.stringify(question.id)}
+              userId={JSON.stringify(user.id)}
+              upvotes={question.upvotes.length}
+              hasUpvoted={
+                question.upvotes.filter((v) => v.userId === user.id).length > 0
+              }
+              downvotes={question.downvotes.length}
+              hasDownvoted={
+                question.downvotes.filter((v) => v.userId === user.id).length >
+                0
+              }
+              hasSaved={
+                user.savedQuestions.filter((q) => q.id === question.id).length >
+                0
+              }
+            />
           </div>
         </div>
         <h2 className="h2-semibold text-dark200_light900 mt-3.5 w-full text-left">
@@ -49,10 +67,10 @@ const Question = async ({ params, searchParams }: any) => {
         </h2>
         <div className="mb-8 mt-5 flex flex-wrap gap-4">
           <Metric
-            imgUrl="/assets/icons/like.svg"
+            imgUrl="/assets/icons/clock.svg"
             alt="clock icon"
             value={` asked ${getTimeStamp(question.createdAt)}`}
-            title=" Asked"
+            title=" "
             textStyles="small-medium text-dark400_light800"
           />
           <Metric
@@ -81,13 +99,13 @@ const Question = async ({ params, searchParams }: any) => {
 
       <AllAnswers
         questionId={question.id}
-        userId={JSON.stringify(user?.id)}
+        userId={JSON.stringify(user.id)}
         totalAnswers={question.answerIds.length}
       />
       <Answer
         question={question.content}
         questionId={JSON.stringify(question.id)}
-        userId={JSON.stringify(user?.id)}
+        userId={JSON.stringify(user.id)}
       />
     </>
   );
