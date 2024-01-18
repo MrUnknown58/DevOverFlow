@@ -81,7 +81,10 @@ export async function deleteUser({ clerkId }: DeleteUserParams) {
         id: true,
       },
     });
-    console.log(userQuestionIds);
+    console.log(
+      "userQuestionIds from user.action >>>>>>>>>>> ",
+      userQuestionIds
+    );
     await prisma.question.deleteMany({
       where: {
         authorId: clerkId,
