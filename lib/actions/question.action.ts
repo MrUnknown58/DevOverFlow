@@ -31,11 +31,13 @@ export async function getQuestions(params: GetQuestionsParams) {
         answers: true,
         upvotes: true,
         downvotes: true,
+        Interaction: true,
       },
       orderBy: {
         createdAt: "desc",
       },
     });
+    console.log(questions);
     return questions;
   } catch (e) {
     console.log(e);
@@ -50,12 +52,6 @@ export async function createQuestion(question: CreateQuestionParams) {
     // return questionId;
     const { title, content, tags, author, path } = question;
 
-    const userTest = await prisma.user.findFirst({
-      where: {
-        id: author,
-      },
-    });
-    console.log(userTest);
     const questionId = await prisma.question.create({
       data: {
         title,
@@ -67,13 +63,6 @@ export async function createQuestion(question: CreateQuestionParams) {
         },
       },
     });
-
-    const user = await prisma.user.findFirst({
-      where: {
-        id: author,
-      },
-    });
-    console.log(user);
     const tagIds = [];
     for (const tag of tags) {
       const existingtag = await prisma.tag.upsert({
@@ -98,6 +87,7 @@ export async function createQuestion(question: CreateQuestionParams) {
       });
       tagIds.push(existingtag.id);
     }
+    // const newInteraction = await prisma.interaction.create({});
     // console.log(tagIds);
     const newQuestion = await prisma.question.update({
       where: {

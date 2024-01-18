@@ -60,10 +60,6 @@ const Votes = ({
           path: pathname,
         });
       } else if (type === "answer") {
-        console.log("itemId", itemId);
-        console.log(JSON.parse(itemId));
-        console.log("userId", userId);
-        console.log(JSON.parse(userId));
         await upvoteAnswer({
           answerId: JSON.parse(itemId),
           userId: JSON.parse(userId),

@@ -33,7 +33,16 @@ export async function viewQuestion(params: ViewQuestionParams) {
           action: "view",
         },
       });
-      console.log(newInteraction);
+      await prisma.question.update({
+        where: {
+          id: questionId,
+        },
+        data: {
+          interactionId: {
+            push: newInteraction.id,
+          },
+        },
+      });
     }
   } catch (e) {
     console.log(e);
