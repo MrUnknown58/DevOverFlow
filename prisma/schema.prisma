@@ -11,22 +11,24 @@ datasource db {
 }
 
 model Question {
-  id         String     @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  title      String
-  content    String
-  views      Int        @default(0)
-  upvotes    Upvote[]
-  upvoteId   String[]   @db.ObjectId
-  downvotes  Downvote[]
-  downvoteId String[]   @db.ObjectId
-  author     User       @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  authorId   String     @db.ObjectId
-  answers    Answer[]
-  answerIds  String[]   @db.ObjectId
-  tags       Tag[]      @relation(fields: [tagId], references: [id])
-  tagId      String[]   @db.ObjectId
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  title         String
+  content       String
+  views         Int           @default(0)
+  upvotes       Upvote[]
+  upvoteId      String[]      @db.ObjectId
+  downvotes     Downvote[]
+  downvoteId    String[]      @db.ObjectId
+  author        User          @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  authorId      String        @db.ObjectId
+  answers       Answer[]
+  answerIds     String[]      @db.ObjectId
+  tags          Tag[]         @relation(fields: [tagId], references: [id])
+  tagId         String[]      @db.ObjectId
+  Interaction   Interaction[]
+  interactionId String[]      @db.ObjectId
 }
 
 model Upvote {
@@ -50,26 +52,28 @@ model Downvote {
 }
 
 model Answer {
-  id         String     @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt  DateTime   @default(now())
-  updatedAt  DateTime   @updatedAt
-  content    String
-  author     User       @relation(fields: [authorId], references: [id])
-  authorId   String     @db.ObjectId
-  question   Question   @relation(fields: [questionId], references: [id])
-  questionId String     @db.ObjectId
-  upvotes    Upvote[]
-  upvoteId   String[]   @db.ObjectId
-  downvotes  Downvote[]
-  downvoteId String[]   @db.ObjectId
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  content       String
+  author        User          @relation(fields: [authorId], references: [id])
+  authorId      String        @db.ObjectId
+  question      Question      @relation(fields: [questionId], references: [id])
+  questionId    String        @db.ObjectId
+  upvotes       Upvote[]
+  upvoteId      String[]      @db.ObjectId
+  downvotes     Downvote[]
+  downvoteId    String[]      @db.ObjectId
+  Interaction   Interaction[]
+  interactionId String[]      @db.ObjectId
 }
 
 model User {
-  id               String     @id @default(auto()) @map("_id") @db.ObjectId
-  clerkId          String     @unique
-  createdAt        DateTime   @default(now())
-  updatedAt        DateTime   @updatedAt
-  email            String     @unique
+  id               String        @id @default(auto()) @map("_id") @db.ObjectId
+  clerkId          String        @unique
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  email            String        @unique
   username         String?
   name             String
   password         String?
@@ -77,24 +81,41 @@ model User {
   picture          String
   location         String?
   portfolioWebsite String?
-  reputation       Int        @default(0)
-  joinedAt         DateTime   @default(now())
+  reputation       Int           @default(0)
+  joinedAt         DateTime      @default(now())
   answers          Answer[]
   savedQuestions   Question[]
-  savedQuestionId  String[]   @db.ObjectId
+  savedQuestionId  String[]      @db.ObjectId
   upvotes          Upvote[]
   Downvote         Downvote[]
-  Tag              Tag?       @relation(fields: [tagId], references: [id])
-  tagId            String?    @db.ObjectId
+  Tag              Tag?          @relation(fields: [tagId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tagId            String?       @db.ObjectId
+  Interaction      Interaction[]
 }
 
 model Tag {
-  id          String     @id @default(auto()) @map("_id") @db.ObjectId
-  createdAt   DateTime   @default(now())
-  updatedAt   DateTime   @updatedAt
-  name        String     @unique
-  description String?
-  followers   User[]
-  questions   Question[] @relation(fields: [questionId], references: [id])
-  questionId  String[]   @db.ObjectId
+  id            String        @id @default(auto()) @map("_id") @db.ObjectId
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  name          String        @unique
+  description   String?
+  followers     User[]
+  questions     Question[]    @relation(fields: [questionId], references: [id])
+  questionId    String[]      @db.ObjectId
+  Interaction   Interaction[] @relation(fields: [interactionId], references: [id])
+  interactionId String[]      @db.ObjectId
+}
+
+model Interaction {
+  id         String    @id @default(auto()) @map("_id") @db.ObjectId
+  user       User      @relation(fields: [userId], references: [id])
+  userId     String    @db.ObjectId
+  action     String
+  question   Question? @relation(fields: [questionId], references: [id])
+  questionId String?   @db.ObjectId
+  answer     Answer?   @relation(fields: [answerId], references: [id])
+  answerId   String?   @db.ObjectId
+  tags       Tag[]     @relation(fields: [tagId], references: [id])
+  tagId      String[]  @db.ObjectId
+  createdAt  DateTime  @default(now())
 }
