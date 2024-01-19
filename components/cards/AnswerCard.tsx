@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import Metric from "../shared/Metric";
-import { SignedIn } from "@clerk/nextjs";
 import { formatNumber, getTimeStamp } from "@/lib/utils";
 interface Props {
   clerkId?: string | null;
@@ -28,7 +27,7 @@ const AnswerCard = ({
   upvotes,
   createdAt,
 }: Props) => {
-  const showActionButtons = clerkId && clerkId === author.clerkId;
+  //   const showActionButtons = clerkId && clerkId === author.clerkId;
 
   return (
     <Link
