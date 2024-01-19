@@ -52,3 +52,11 @@ export const formatNumber = (number: number): string => {
     return number.toString();
   }
 };
+
+// get the javascript date object as a parameter and return a joined date
+export const getJoinedDate = (createdAt: Date): string => {
+  // const date = createdAt.getDate();
+  const month = createdAt.toLocaleString("default", { month: "long" });
+  const year = createdAt.getFullYear();
+  return `${month} ${year}`;
+};

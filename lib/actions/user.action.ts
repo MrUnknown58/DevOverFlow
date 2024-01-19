@@ -6,6 +6,7 @@ import {
   GetAllUsersParams,
   GetSavedQuestionsParams,
   GetUserByIdParams,
+  GetUserStatsParams,
   ToggleSaveQuestionParams,
   UpdateUserParams,
 } from "./shared.types";
@@ -18,6 +19,7 @@ export async function getUserById({ userId }: GetUserByIdParams) {
         clerkId: userId,
       },
     });
+    if (!user) throw new Error("User not found");
     return user;
   } catch (e) {
     console.log(e);
@@ -215,6 +217,123 @@ export async function getSavedQuestions(params: GetSavedQuestionsParams) {
       },
     });
     return savedQuestions;
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+export async function getUserInfo(params: GetUserByIdParams) {
+  try {
+    const { userId } = params;
+    const user = await prisma.user.findUnique({
+      where: {
+        clerkId: userId,
+      },
+    });
+    if (!user) throw new Error("User not found");
+    const totalQuestions = await prisma.question.count({
+      where: {
+        authorId: user.id,
+      },
+    });
+    const totalAnswers = await prisma.answer.count({
+      where: {
+        authorId: user.id,
+      },
+    });
+    return { user, totalQuestions, totalAnswers };
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+export async function getUserQuestions(params: GetUserStatsParams) {
+  try {
+    // eslint-disable-next-line no-unused-vars
+    const { userId, page = 1, pageSize = 10 } = params;
+    const questions = await prisma.question.findMany({
+      where: {
+        authorId: userId,
+      },
+      orderBy: [
+        {
+          views: "desc",
+        },
+        {
+          upvotes: {
+            _count: "desc",
+          },
+        },
+      ],
+      include: {
+        tags: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            clerkId: true,
+            name: true,
+            picture: true,
+          },
+        },
+        answers: true,
+        upvotes: true,
+        downvotes: true,
+      },
+    });
+    return {
+      totalQuestions: questions.length,
+      questions,
+    };
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+export async function getUserAnswers(params: GetUserStatsParams) {
+  try {
+    // eslint-disable-next-line no-unused-vars
+    const { userId, page = 1, pageSize = 10 } = params;
+    const answers = await prisma.answer.findMany({
+      where: {
+        authorId: userId,
+      },
+      orderBy: [
+        {
+          upvotes: {
+            _count: "desc",
+          },
+        },
+      ],
+      include: {
+        question: {
+          select: {
+            id: true,
+            title: true,
+          },
+        },
+        author: {
+          select: {
+            id: true,
+            clerkId: true,
+            name: true,
+            picture: true,
+          },
+        },
+        upvotes: true,
+        downvotes: true,
+      },
+    });
+    return {
+      totalQuestions: answers.length,
+      answers,
+    };
   } catch (e) {
     console.log(e);
     throw e;
