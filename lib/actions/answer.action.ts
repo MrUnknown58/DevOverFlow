@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import {
   AnswerVoteParams,
   CreateAnswerParams,
+  DeleteAnswerParams,
   GetAnswersParams,
 } from "./shared.types";
 import prisma from "@/utils/prismdb";
@@ -288,6 +289,60 @@ export async function downvoteAnswer(params: AnswerVoteParams) {
       });
       revalidatePath(path);
     }
+  } catch (e) {
+    console.log(e);
+    throw e;
+  }
+}
+
+export async function deleteAnswer(params: DeleteAnswerParams) {
+  try {
+    const { answerId, path } = params;
+    const answer = await prisma.answer.findUnique({
+      where: {
+        id: answerId,
+      },
+      include: {
+        question: true,
+      },
+    });
+    if (!answer) throw new Error("Answer not found");
+    await prisma.upvote.deleteMany({
+      where: {
+        answerId,
+      },
+    });
+    await prisma.downvote.deleteMany({
+      where: {
+        answerId,
+      },
+    });
+    console.log("Going to update question >>>>>>>>> ");
+    const updatedQues = await prisma.question.update({
+      where: {
+        id: answer.questionId,
+      },
+      data: {
+        // answerIds: answer.question.answerIds.filter((id) => id !== answerId),
+        // answers: {
+        //   disconnect: {
+        //     id: answerId,
+        //   },
+        // },
+        answerIds: {
+          set: answer.question.answerIds.filter((id) => id !== answerId),
+        },
+      },
+    });
+
+    console.log("Updated Question >>>>>>>>>", updatedQues);
+    const deletedAnswer = await prisma.answer.delete({
+      where: {
+        id: answerId,
+      },
+    });
+    console.log("Deleted Answer >>>>>>>>>", deletedAnswer);
+    revalidatePath(path);
   } catch (e) {
     console.log(e);
     throw e;

@@ -14,7 +14,6 @@ import AnswersTab from "@/components/shared/AnswersTab";
 const Profile = async ({ params, searchParams }: URLProps) => {
   const userInfo = await getUserInfo({ userId: params.id });
   const { userId: clerkId } = auth();
-  console.log(userInfo);
   return (
     <>
       <div className="flex flex-col-reverse items-start justify-between sm:flex-row">
@@ -53,7 +52,7 @@ const Profile = async ({ params, searchParams }: URLProps) => {
               />
             </div>
             {userInfo.user.bio && (
-              <p className="paragraph-regular text-dark300_light900">
+              <p className="paragraph-regular text-dark300_light900 mt-8">
                 {userInfo.user.bio}
               </p>
             )}

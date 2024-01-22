@@ -22,6 +22,7 @@ const Question = async ({ params, searchParams }: any) => {
   const user = await getUserById({ userId });
   if (!user) redirect("/sign-in");
   if (!question) return <></>;
+  console.log(question);
   return (
     <>
       <div className="flex-start w-full flex-col">

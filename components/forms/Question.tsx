@@ -19,56 +19,67 @@ import { QuestionSchema } from "@/lib/validations";
 import * as z from "zod";
 import { Badge } from "../ui/badge";
 import Image from "next/image";
-import { createQuestion } from "@/lib/actions/question.action";
+import { createQuestion, editQuestion } from "@/lib/actions/question.action";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "@/context/ThemeProvider";
 
-const type = "create";
+// const type = "create";
 
 interface QuestionProps {
+  type?: "create" | "edit";
   userDetails: string;
+  questionDetails?: string;
 }
 
-const Question = ({ userDetails }: QuestionProps) => {
+const Question = ({
+  type = "create",
+  questionDetails,
+  userDetails,
+}: QuestionProps) => {
   const editorRef = useRef(null);
   const { theme } = useTheme();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-
+  const parsedQuestionDetails = JSON.parse(questionDetails || "{}");
+  const groupedTags = parsedQuestionDetails?.tags?.map((tag: any) => tag.name);
+  console.log(groupedTags);
+  console.log(groupedTags || []);
   const form = useForm<z.infer<typeof QuestionSchema>>({
     resolver: zodResolver(QuestionSchema),
     defaultValues: {
-      title: "",
-      explanation: "",
-      tags: [],
+      title: parsedQuestionDetails?.title || "",
+      explanation: parsedQuestionDetails?.content || "",
+      tags: groupedTags || [],
     },
   });
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof QuestionSchema>) {
+    console.log("Logging values from onSubmit  ", values);
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     setIsSubmitting(true);
     try {
-      // make an async call to the database
-      // contain all data in values
-      // if success, redirect to the home page
-      // await createQuestion({
-      //   title: values.title,
-      //   content: values.explanation,
-      //   tags: values.tags,
-      //   author: JSON.parse(mongoUserId),
-      //   path: pathname,
-      // });
-      await createQuestion({
-        title: values.title,
-        content: values.explanation,
-        tags: values.tags,
-        author: JSON.parse(userDetails),
-        path: pathname,
-      });
-      router.push("/");
+      if (type === "edit") {
+        // await editQuestion({});
+        await editQuestion({
+          title: values.title,
+          content: values.explanation,
+          questionId: parsedQuestionDetails.id,
+          path: pathname,
+        });
+        router.push(`/question/${parsedQuestionDetails.id}`);
+      } else if (type === "create") {
+        await createQuestion({
+          title: values.title,
+          content: values.explanation,
+          tags: values.tags,
+          author: JSON.parse(userDetails),
+          path: pathname,
+        });
+        router.push("/");
+      }
     } catch (e) {
     } finally {
       setIsSubmitting(false);
@@ -151,7 +162,9 @@ const Question = ({ userDetails }: QuestionProps) => {
                       // @ts-ignore
                       editorRef.current = editor;
                     }}
-                    initialValue=""
+                    initialValue={
+                      type === "edit" ? parsedQuestionDetails.content : ""
+                    }
                     onBlur={field.onBlur}
                     onEditorChange={(content, editor) => {
                       field.onChange(content);
@@ -208,6 +221,7 @@ const Question = ({ userDetails }: QuestionProps) => {
                   <>
                     <Input
                       placeholder="Add tags..."
+                      disabled={type === "edit"}
                       onKeyDown={(e) => handleInputKeyDown(e, field)}
                       className="no-focus paragraph-regular background-light900_dark300 light-border-2 text-dark300_light700 min-h-[56px] border"
                     />
@@ -217,16 +231,22 @@ const Question = ({ userDetails }: QuestionProps) => {
                           <Badge
                             key={tag}
                             className="subtle-medium background-light800_dark300 text-light400_light500 flex items-center gap-2 rounded-md border-none px-4 py-2 capitalize"
-                            onClick={() => handleTagRemove(tag, field)}
+                            onClick={() =>
+                              type !== "edit"
+                                ? handleTagRemove(tag, field)
+                                : () => {}
+                            }
                           >
                             {tag}
-                            <Image
-                              src={"/assets/icons/close.svg"}
-                              alt="close icon"
-                              height={12}
-                              width={12}
-                              className="cursor-pointer object-contain invert-0 dark:invert"
-                            />
+                            {type !== "edit" && (
+                              <Image
+                                src={"/assets/icons/close.svg"}
+                                alt="close icon"
+                                height={12}
+                                width={12}
+                                className="cursor-pointer object-contain invert-0 dark:invert"
+                              />
+                            )}
                           </Badge>
                         ))}
                       </div>
@@ -245,6 +265,7 @@ const Question = ({ userDetails }: QuestionProps) => {
             type="submit"
             className="primary-gradient w-fit !text-light-900 disabled:bg-slate-400"
             disabled={isSubmitting}
+            onClick={() => console.log(form.getValues())}
           >
             {isSubmitting ? (
               <>{type === "create" ? "Posting" : "Updating"} Question...</>

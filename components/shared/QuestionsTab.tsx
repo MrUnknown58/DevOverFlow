@@ -13,6 +13,7 @@ const QuestionsTab = async ({
   userId,
 }: QuestionsTabProps) => {
   const results = await getUserQuestions({ userId, page: 1 });
+  console.log("Logging from QuestionsTab.tsx", clerkId);
   return (
     <>
       {results.questions.map((question) => (
