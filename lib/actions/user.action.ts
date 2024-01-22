@@ -44,16 +44,13 @@ export async function updateUser({
   path,
 }: UpdateUserParams) {
   try {
-    const { email, username, name, picture } = updateData;
+    // const { email, username, name, picture } = updateData;
     const updatedUser = await prisma.user.update({
       where: {
         clerkId,
       },
       data: {
-        email,
-        username,
-        name,
-        picture,
+        ...updateData,
       },
     });
     revalidatePath(path);
@@ -339,3 +336,26 @@ export async function getUserAnswers(params: GetUserStatsParams) {
     throw e;
   }
 }
+
+// export async function updateUser(params: UpdateUserParams) {
+//   try {
+//     const { clerkId, updateData, path } = params;
+//     const { email, username, name, picture } = updateData;
+//     const updatedUser = await prisma.user.update({
+//       where: {
+//         clerkId,
+//       },
+//       data: {
+//         email,
+//         username,
+//         name,
+//         picture,
+//       },
+//     });
+//     revalidatePath(path);
+//     return updatedUser;
+//   } catch (e) {
+//     console.log(e);
+//     throw e;
+//   }
+// }

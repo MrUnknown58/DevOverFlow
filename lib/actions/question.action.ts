@@ -2,12 +2,13 @@
 import prisma from "@/utils/prismdb";
 import {
   CreateQuestionParams,
+  DeleteQuestionParams,
+  EditQuestionParams,
   GetQuestionByIdParams,
   GetQuestionsParams,
   QuestionVoteParams,
 } from "./shared.types";
 import { revalidatePath } from "next/cache";
-// import { NextResponse } from "next/server";
 
 export async function getQuestions(params: GetQuestionsParams) {
   try {
@@ -370,5 +371,144 @@ export async function downvoteQuestion(params: QuestionVoteParams) {
   } catch (e) {
     console.log(e);
     throw new Error("Internal Server Error: downvoteQuestion");
+  }
+}
+
+export async function deleteQuestion(params: DeleteQuestionParams) {
+  try {
+    const { questionId, path } = params;
+    const question = await prisma.question.findFirst({
+      where: {
+        id: questionId,
+      },
+      include: {
+        answers: true,
+      },
+    });
+    const answerIds = question?.answers.map((answer) => answer.id);
+    await prisma.interaction.deleteMany({
+      where: {
+        questionId,
+      },
+    });
+    await prisma.upvote.deleteMany({
+      where: {
+        OR: [
+          {
+            questionId,
+          },
+          {
+            answerId: {
+              in: answerIds,
+            },
+          },
+        ],
+      },
+    });
+    await prisma.downvote.deleteMany({
+      where: {
+        OR: [
+          {
+            questionId,
+          },
+          {
+            answerId: {
+              in: answerIds,
+            },
+          },
+        ],
+      },
+    });
+    await prisma.answer.deleteMany({
+      where: {
+        questionId,
+      },
+    });
+    const tags = await prisma.tag.findMany({
+      where: {
+        questions: {
+          some: {
+            id: questionId,
+          },
+        },
+      },
+    });
+
+    // For each tag, remove the questionId from the questionId array
+    for (const tag of tags) {
+      const updatedQuestionIds = tag.questionId.filter(
+        (id) => id !== questionId
+      );
+
+      await prisma.tag.update({
+        where: { id: tag.id },
+        data: {
+          questionId: {
+            set: updatedQuestionIds,
+          },
+        },
+      });
+    }
+    await prisma.question.delete({
+      where: {
+        id: questionId,
+      },
+    });
+    revalidatePath(path);
+    return question;
+  } catch (e) {
+    console.log(e);
+  }
+}
+
+export async function editQuestion(params: EditQuestionParams) {
+  try {
+    const { questionId, title, content, path } = params;
+    const question = await prisma.question.findUnique({
+      where: {
+        id: questionId,
+      },
+      include: {
+        tags: true,
+      },
+    });
+    if (!question) throw new Error("Question not found");
+    // const tagIds = [];
+    // for (const tag of tags) {
+    //   const existingtag = await prisma.tag.upsert({
+    //     where: {
+    //       name: tag,
+    //     },
+    //     update: {
+    //       questions: {
+    //         connect: {
+    //           id: questionId,
+    //         },
+    //       },
+    //     },
+    //     create: {
+    //       name: tag,
+    //       questions: {
+    //         connect: {
+    //           id: questionId,
+    //         },
+    //       },
+    //     },
+    //   });
+    //   tagIds.push(existingtag.id);
+    // }
+    const updatedQuestion = await prisma.question.update({
+      where: {
+        id: questionId,
+      },
+      data: {
+        title,
+        content,
+      },
+    });
+    revalidatePath(path);
+    return updatedQuestion;
+  } catch (e) {
+    console.log(e);
   }
 }

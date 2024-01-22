@@ -5,55 +5,62 @@ import { ViewQuestionParams } from "./shared.types";
 export async function viewQuestion(params: ViewQuestionParams) {
   try {
     const { questionId, userId } = params;
-    const transaction = await prisma.$transaction([
-      prisma.question.update({
+    const ques = await prisma.question.findFirst({
+      where: {
+        id: questionId,
+      },
+    });
+    if (!ques) {
+      return console.log("Question not found");
+    }
+    const updatedQues = await prisma.question.update({
+      where: {
+        id: questionId,
+      },
+      data: {
+        views: {
+          increment: 1,
+        },
+      },
+    });
+    console.log("Updated question >>>>", updatedQues);
+    // Update view count for question
+    console.log("User already viewed? ", userId);
+    if (userId) {
+      const existingView = await prisma.interaction.findFirst({
+        where: {
+          questionId,
+          userId,
+        },
+      });
+      console.log("Existing view >>>>", existingView);
+      if (existingView)
+        return console.log("User has already viewed this question");
+      console.log("Creating new interaction");
+      const newInteraction = await prisma.interaction.create({
+        data: {
+          questionId,
+          userId,
+          action: "view",
+        },
+      });
+      console.log("Updating question with new interaction");
+      await prisma.question.update({
         where: {
           id: questionId,
         },
         data: {
-          views: {
-            increment: 1,
+          interactionId: {
+            push: newInteraction.id,
+          },
+          Interaction: {
+            connect: {
+              id: newInteraction.id,
+            },
           },
         },
-      }),
-    ]);
-    // Update view count for question
-    console.log("User already viewed? ", userId);
-    if (transaction)
-      if (userId) {
-        const existingView = await prisma.interaction.findFirst({
-          where: {
-            questionId,
-            userId,
-          },
-        });
-        console.log("Existing view >>>>", existingView);
-        if (existingView)
-          return console.log("User has already viewed this question");
-        console.log("Creating new interaction");
-        const newInteraction = await prisma.interaction.create({
-          data: {
-            questionId,
-            userId,
-            action: "view",
-          },
-        });
-        await prisma.question.update({
-          where: {
-            id: questionId,
-          },
-          data: {
-            interactionId: {
-              push: newInteraction.id,
-            },
-            Interaction: {
-              connect: {
-                id: newInteraction.id,
-              },
-            },
-          },
-        });
-      }
+      });
+    }
   } catch (e) {
     console.log(e);
     throw new Error("Internal Server Error: viewQuestion");
