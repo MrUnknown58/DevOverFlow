@@ -72,7 +72,7 @@ export async function deleteUser({ clerkId }: DeleteUserParams) {
 
     // TODO: Delete all user's posts
     // get all posts by user
-    const userQuestionIds = await prisma.question.findMany({
+    await prisma.question.findMany({
       where: {
         authorId: clerkId,
       },
@@ -80,10 +80,10 @@ export async function deleteUser({ clerkId }: DeleteUserParams) {
         id: true,
       },
     });
-    console.log(
-      "userQuestionIds from user.action >>>>>>>>>>> ",
-      userQuestionIds
-    );
+    // console.log(
+    //   "userQuestionIds from user.action >>>>>>>>>>> ",
+    //   userQuestionIds
+    // );
     await prisma.question.deleteMany({
       where: {
         authorId: clerkId,
@@ -107,21 +107,72 @@ export async function deleteUser({ clerkId }: DeleteUserParams) {
 export async function getAllUsers(params: GetAllUsersParams) {
   try {
     // const { page = 1, pageSize = 20, filter, searchQuery } = params;
+    const { searchQuery, filter, page = 1, pageSize = 10 } = params;
+    let orderBy;
+    if (filter) {
+      switch (filter) {
+        case "new_users":
+          orderBy = {
+            createdAt: "desc",
+          } as const;
+          break;
+        case "old_users":
+          orderBy = {
+            createdAt: "asc",
+          } as const;
+          break;
+        case "top_contributors":
+          orderBy = { reputation: "desc" } as const;
+          break;
+        default:
+          orderBy = {
+            createdAt: "desc",
+          } as const;
+      }
+    }
+    const skipAmt = (page - 1) * pageSize;
     const users = await prisma.user.findMany({
-      // select: {
-      //   id: true,
-      //   username: true,
-      //   name: true,
-      //   picture: true,
-      //   email: true,
-      //   createdAt: true,
-      // },
-      orderBy: {
-        createdAt: "desc",
+      where: {
+        OR: [
+          {
+            username: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            name: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+      skip: skipAmt,
+      take: pageSize,
+      orderBy,
+    });
+    const totalUsers = await prisma.user.count({
+      where: {
+        OR: [
+          {
+            username: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            name: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
       },
     });
-    console.log(users);
-    return users;
+    const isNext = totalUsers > skipAmt + users.length;
+    // console.log(users);
+    return { users, isNext };
   } catch (e) {
     console.log(e);
     throw e;
@@ -137,7 +188,7 @@ export async function toggleSaveQuestion(params: ToggleSaveQuestionParams) {
       },
     });
     if (!user) throw new Error("User not found");
-    console.log(user);
+    // console.log(user);
     const isSaved = user.savedQuestionId.includes(questionId);
     if (isSaved) {
       // remove question from saved questions
@@ -176,23 +227,67 @@ export async function toggleSaveQuestion(params: ToggleSaveQuestionParams) {
 
 export async function getSavedQuestions(params: GetSavedQuestionsParams) {
   try {
-    // eslint-disable-next-line no-unused-vars
-    const { clerkId, filter, page = 1, pageSize = 10, searchQuery } = params;
+    const { clerkId, filter, page = 1, pageSize = 20, searchQuery } = params;
+    const skipAmt = (page - 1) * pageSize;
     const user = await prisma.user.findFirst({
       where: {
         clerkId,
       },
     });
     if (!user) throw new Error("User not found");
+    let orderBy;
+    if (filter) {
+      switch (filter) {
+        case "most_recent":
+          orderBy = {
+            createdAt: "desc",
+          } as const;
+          break;
+        case "oldest":
+          orderBy = {
+            createdAt: "asc",
+          } as const;
+          break;
+        case "most_voted":
+          orderBy = {
+            upvotes: {
+              _count: "desc",
+            },
+          } as const;
+          break;
+        case "most_viewed":
+          orderBy = {
+            views: "desc",
+          } as const;
+          break;
+        case "most_answered":
+          orderBy = {
+            answers: {
+              _count: "desc",
+            },
+          } as const;
+          break;
+        default:
+          orderBy = {
+            createdAt: "desc",
+          } as const;
+      }
+    }
     const savedQuestions = await prisma.question.findMany({
       where: {
         id: {
           in: user.savedQuestionId,
         },
+        OR: [
+          {
+            title: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy,
       include: {
         tags: {
           select: {
@@ -212,8 +307,26 @@ export async function getSavedQuestions(params: GetSavedQuestionsParams) {
         upvotes: true,
         downvotes: true,
       },
+      skip: skipAmt,
+      take: pageSize,
     });
-    return savedQuestions;
+    const totalSavedQuestions = await prisma.question.count({
+      where: {
+        id: {
+          in: user.savedQuestionId,
+        },
+        OR: [
+          {
+            title: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
+    });
+    const isNext = totalSavedQuestions > skipAmt + savedQuestions.length;
+    return { questions: savedQuestions, isNext };
   } catch (e) {
     console.log(e);
     throw e;
@@ -248,8 +361,8 @@ export async function getUserInfo(params: GetUserByIdParams) {
 
 export async function getUserQuestions(params: GetUserStatsParams) {
   try {
-    // eslint-disable-next-line no-unused-vars
     const { userId, page = 1, pageSize = 10 } = params;
+    const skipAmt = (page - 1) * pageSize;
     const questions = await prisma.question.findMany({
       where: {
         authorId: userId,
@@ -283,10 +396,19 @@ export async function getUserQuestions(params: GetUserStatsParams) {
         upvotes: true,
         downvotes: true,
       },
+      skip: skipAmt,
+      take: pageSize,
     });
+    const totalQuestions = await prisma.question.count({
+      where: {
+        authorId: userId,
+      },
+    });
+    const isNext = totalQuestions > skipAmt + questions.length;
     return {
       totalQuestions: questions.length,
       questions,
+      isNext,
     };
   } catch (e) {
     console.log(e);
@@ -295,8 +417,8 @@ export async function getUserQuestions(params: GetUserStatsParams) {
 }
 export async function getUserAnswers(params: GetUserStatsParams) {
   try {
-    // eslint-disable-next-line no-unused-vars
     const { userId, page = 1, pageSize = 10 } = params;
+    const skipAmt = (page - 1) * pageSize;
     const answers = await prisma.answer.findMany({
       where: {
         authorId: userId,
@@ -326,10 +448,19 @@ export async function getUserAnswers(params: GetUserStatsParams) {
         upvotes: true,
         downvotes: true,
       },
+      skip: skipAmt,
+      take: pageSize,
     });
+    const totalAnswers = await prisma.answer.count({
+      where: {
+        authorId: userId,
+      },
+    });
+    const isNext = totalAnswers > skipAmt + answers.length;
     return {
       totalQuestions: answers.length,
       answers,
+      isNext,
     };
   } catch (e) {
     console.log(e);
