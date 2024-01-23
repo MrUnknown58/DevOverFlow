@@ -22,7 +22,7 @@ const Question = async ({ params, searchParams }: any) => {
   const user = await getUserById({ userId });
   if (!user) redirect("/sign-in");
   if (!question) return <></>;
-  console.log(question);
+  // console.log(question);
   return (
     <>
       <div className="flex-start w-full flex-col">
@@ -99,6 +99,8 @@ const Question = async ({ params, searchParams }: any) => {
         questionId={question.id}
         userId={JSON.stringify(user.id)}
         totalAnswers={question.answerIds.length}
+        page={searchParams?.page}
+        filter={searchParams?.filter}
       />
       <Answer
         question={question.content}

@@ -11,9 +11,9 @@ export async function viewQuestion(params: ViewQuestionParams) {
       },
     });
     if (!ques) {
-      return console.log("Question not found");
+      // return console.log("Question not found");
     }
-    const updatedQues = await prisma.question.update({
+    await prisma.question.update({
       where: {
         id: questionId,
       },
@@ -23,9 +23,9 @@ export async function viewQuestion(params: ViewQuestionParams) {
         },
       },
     });
-    console.log("Updated question >>>>", updatedQues);
+    // console.log("Updated question >>>>", updatedQues);
     // Update view count for question
-    console.log("User already viewed? ", userId);
+    // console.log("User already viewed? ", userId);
     if (userId) {
       const existingView = await prisma.interaction.findFirst({
         where: {
@@ -33,10 +33,10 @@ export async function viewQuestion(params: ViewQuestionParams) {
           userId,
         },
       });
-      console.log("Existing view >>>>", existingView);
+      // console.log("Existing view >>>>", existingView);
       if (existingView)
         return console.log("User has already viewed this question");
-      console.log("Creating new interaction");
+      // console.log("Creating new interaction");
       const newInteraction = await prisma.interaction.create({
         data: {
           questionId,
@@ -44,7 +44,7 @@ export async function viewQuestion(params: ViewQuestionParams) {
           action: "view",
         },
       });
-      console.log("Updating question with new interaction");
+      // console.log("Updating question with new interaction");
       await prisma.question.update({
         where: {
           id: questionId,

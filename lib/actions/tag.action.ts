@@ -5,6 +5,7 @@ import {
   GetQuestionsByTagIdParams,
   GetTopInteractedTagsParams,
 } from "./shared.types";
+import console from "console";
 
 export async function getTopInterativeTags(params: GetTopInteractedTagsParams) {
   try {
@@ -37,13 +38,63 @@ export async function getTopInterativeTags(params: GetTopInteractedTagsParams) {
 
 export async function getAllTags(params: GetAllTagsParams) {
   try {
+    const { searchQuery, filter, page = 1, pageSize = 10 } = params;
+    let orderBy = {};
+    if (filter) {
+      switch (filter) {
+        case "popular":
+          orderBy = {
+            questions: {
+              _count: "desc",
+            },
+          } as const;
+          break;
+        case "recent":
+          orderBy = {
+            createdAt: "desc",
+          } as const;
+          break;
+        case "name":
+          orderBy = {
+            name: "asc",
+          } as const;
+          break;
+        case "old":
+          orderBy = {
+            createdAt: "asc",
+          } as const;
+          break;
+        default:
+          orderBy = {
+            questions: {
+              _count: "desc",
+            },
+          } as const;
+      }
+    }
+    const skipAmt = (page - 1) * pageSize;
     const tags = await prisma.tag.findMany({
-      // include: {
-      //   questions: true,
-      //   followers: true,
-      // },
+      where: {
+        name: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+      skip: skipAmt,
+      take: pageSize,
+
+      orderBy,
     });
-    return tags;
+    const tagsCount = await prisma.tag.count({
+      where: {
+        name: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+    });
+    const isNext = tagsCount > skipAmt + pageSize;
+    return { tags, isNext };
   } catch (e) {
     console.log(e);
     throw e;
@@ -52,29 +103,8 @@ export async function getAllTags(params: GetAllTagsParams) {
 
 export async function getQuestionsByTagID(params: GetQuestionsByTagIdParams) {
   try {
-    const { tagId, page = 1, pageSize = 10, searchQuery = "" } = params;
-    // const questions = await prisma.question.findMany({
-    //   where: {
-    //     tags: {
-    //       some: {
-    //         id: tagId,
-    //       },
-    //     },
-    //     title: {
-    //       contains: searchQuery,
-    //     },
-    //   },
-    //   include: {
-    //     tags: true,
-    //   },
-    //   skip: (page - 1) * pageSize,
-    //   take: pageSize,
-    //   orderBy: {
-    //     createdAt: "desc",
-    //   },
-    // });
-    // console.log(questions);
-    // return questions;
+    const { tagId, page = 1, pageSize = 10, searchQuery } = params;
+    const skipAmit = (page - 1) * pageSize;
     const tags = await prisma.tag.findFirst({
       where: {
         id: tagId,
@@ -84,6 +114,7 @@ export async function getQuestionsByTagID(params: GetQuestionsByTagIdParams) {
           where: {
             title: {
               contains: searchQuery,
+              mode: "insensitive",
             },
           },
           include: {
@@ -106,19 +137,58 @@ export async function getQuestionsByTagID(params: GetQuestionsByTagIdParams) {
             },
           },
           take: pageSize,
-          skip: (page - 1) * pageSize,
+          skip: skipAmit,
           orderBy: {
             createdAt: "desc",
           },
         },
       },
     });
+    const questionsCount = await prisma.question.count({
+      where: {
+        tags: {
+          some: {
+            id: tagId,
+          },
+        },
+        title: {
+          contains: searchQuery,
+          mode: "insensitive",
+        },
+      },
+    });
     if (!tags) throw new Error("Tag not found");
-    // console.log(tags);
     const questions = tags.questions;
-    return { tagTitle: tags.name, questions };
+    const isNext = questionsCount > skipAmit + pageSize;
+    return { tagTitle: tags.name, questions, isNext };
   } catch (e) {
     console.log(e);
     throw e;
+  }
+}
+
+export async function getTopPopularTags() {
+  try {
+    const popularTags = await prisma.tag.findMany({
+      select: {
+        id: true,
+        name: true,
+        questions: {
+          select: {
+            _count: true,
+          },
+        },
+        _count: true,
+      },
+      orderBy: {
+        questions: { _count: "desc" },
+      },
+      take: 5,
+    });
+    // console.log(popularTags);
+    return popularTags;
+  } catch (e) {
+    console.log(e);
+    throw new Error("Something went wrong: getTopPopularTags");
   }
 }

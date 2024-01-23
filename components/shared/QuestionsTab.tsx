@@ -1,6 +1,7 @@
 import { getUserQuestions } from "@/lib/actions/user.action";
 import { SearchParamsProps } from "@/types";
 import QuestionCard from "../cards/QuestionCard";
+import Pagination from "./Pagination";
 
 interface QuestionsTabProps extends SearchParamsProps {
   clerkId?: string | null;
@@ -12,8 +13,10 @@ const QuestionsTab = async ({
   clerkId,
   userId,
 }: QuestionsTabProps) => {
-  const results = await getUserQuestions({ userId, page: 1 });
-  console.log("Logging from QuestionsTab.tsx", clerkId);
+  const results = await getUserQuestions({
+    userId,
+    page: searchParams.page ? +searchParams.page : 1,
+  });
   return (
     <>
       {results.questions.map((question) => (
@@ -32,6 +35,12 @@ const QuestionsTab = async ({
           createdAt={question.createdAt}
         />
       ))}
+      <div className="mt-10">
+        <Pagination
+          pageNumber={searchParams?.page ? +searchParams.page : 1}
+          isNext={results.isNext}
+        />
+      </div>
     </>
   );
 };

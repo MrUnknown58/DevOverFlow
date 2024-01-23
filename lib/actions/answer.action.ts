@@ -51,9 +51,42 @@ export async function createAnswer(params: CreateAnswerParams) {
 
 export async function getAnswers(params: GetAnswersParams) {
   try {
-    // @ts-ignore
-    const { questionId } = params;
-    // const cleanedQuestionId = questionId.replace(/"/g, "");
+    const { questionId, sortBy, page = 1, pageSize = 1 } = params;
+    const skipAmt = (page - 1) * pageSize;
+    let orderBy = {};
+    if (sortBy) {
+      switch (sortBy) {
+        case "highestUpvotes":
+          orderBy = {
+            upvotes: {
+              _count: "desc",
+            },
+          } as const;
+          break;
+        case "lowestUpvotes":
+          orderBy = {
+            upvotes: {
+              _count: "asc",
+            },
+          } as const;
+          break;
+        case "recent":
+          orderBy = {
+            createdAt: "desc",
+          } as const;
+          break;
+        case "old":
+          orderBy = {
+            createdAt: "asc",
+          } as const;
+          break;
+        default:
+          orderBy = {
+            createdAt: "desc",
+          } as const;
+          break;
+      }
+    }
     const answers = await prisma.answer.findMany({
       where: {
         questionId,
@@ -70,11 +103,17 @@ export async function getAnswers(params: GetAnswersParams) {
         downvotes: true,
         upvotes: true,
       },
-      orderBy: {
-        createdAt: "desc",
+      skip: skipAmt,
+      take: pageSize,
+      orderBy,
+    });
+    const totalAnswers = await prisma.answer.count({
+      where: {
+        questionId,
       },
     });
-    return answers;
+    const isNext = totalAnswers > skipAmt + pageSize;
+    return { answers, isNext };
   } catch (e) {
     console.log(e);
     throw e;
@@ -317,8 +356,8 @@ export async function deleteAnswer(params: DeleteAnswerParams) {
         answerId,
       },
     });
-    console.log("Going to update question >>>>>>>>> ");
-    const updatedQues = await prisma.question.update({
+    // console.log("Going to update question >>>>>>>>> ");
+    await prisma.question.update({
       where: {
         id: answer.questionId,
       },
@@ -335,13 +374,13 @@ export async function deleteAnswer(params: DeleteAnswerParams) {
       },
     });
 
-    console.log("Updated Question >>>>>>>>>", updatedQues);
-    const deletedAnswer = await prisma.answer.delete({
+    // console.log("Updated Question >>>>>>>>>", updatedQues);
+    await prisma.answer.delete({
       where: {
         id: answerId,
       },
     });
-    console.log("Deleted Answer >>>>>>>>>", deletedAnswer);
+    // console.log("Deleted Answer >>>>>>>>>", deletedAnswer);
     revalidatePath(path);
   } catch (e) {
     console.log(e);
