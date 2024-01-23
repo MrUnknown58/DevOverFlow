@@ -9,7 +9,7 @@ import {
   QuestionVoteParams,
 } from "./shared.types";
 import { revalidatePath } from "next/cache";
-
+import { Prisma } from "@prisma/client";
 export async function getQuestions(params: GetQuestionsParams) {
   try {
     // const { page, pageSize, searchQuery, filter } = params;
@@ -25,7 +25,42 @@ export async function getQuestions(params: GetQuestionsParams) {
     //   skip: (page - 1) * pageSize,
     //   take: pageSize,
     // });
+    const { searchQuery, filter, page = 1, pageSize = 10 } = params;
+    let order;
+    if (filter) {
+      switch (filter) {
+        case "newest":
+          order = { createdAt: Prisma.SortOrder.desc } as const;
+          break;
+        case "unanswered":
+          order = { answers: { _count: Prisma.SortOrder.asc } } as const;
+          break;
+        case "frequent":
+          order = { views: Prisma.SortOrder.desc } as const;
+          break;
+        default:
+          order = { createdAt: Prisma.SortOrder.desc } as const;
+          break;
+      }
+    }
+    const skipAmt = (page - 1) * pageSize;
     const questions = await prisma.question.findMany({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            content: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
+      },
       include: {
         tags: true,
         author: true,
@@ -34,12 +69,31 @@ export async function getQuestions(params: GetQuestionsParams) {
         downvotes: true,
         Interaction: true,
       },
-      orderBy: {
-        createdAt: "desc",
+      orderBy: order,
+      skip: skipAmt,
+      take: pageSize,
+    });
+    const totalQues = await prisma.question.count({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            content: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
       },
     });
+    const isNext = totalQues > skipAmt + questions.length;
     console.log(questions);
-    return questions;
+    return { questions, isNext };
   } catch (e) {
     console.log(e);
     throw new Error("Internal Server Error: getQuestions");
@@ -90,7 +144,7 @@ export async function createQuestion(question: CreateQuestionParams) {
     }
     // const newInteraction = await prisma.interaction.create({});
     // console.log(tagIds);
-    const newQuestion = await prisma.question.update({
+    await prisma.question.update({
       where: {
         id: questionId.id,
       },
@@ -100,7 +154,7 @@ export async function createQuestion(question: CreateQuestionParams) {
         },
       },
     });
-    console.log(newQuestion);
+    // console.log(newQuestion);
     revalidatePath(path);
     // return newQuestion;
   } catch (e) {
@@ -454,6 +508,13 @@ export async function deleteQuestion(params: DeleteQuestionParams) {
         id: questionId,
       },
     });
+    await prisma.tag.deleteMany({
+      where: {
+        questionId: {
+          isEmpty: true,
+        },
+      },
+    });
     revalidatePath(path);
     return question;
   } catch (e) {
@@ -510,5 +571,32 @@ export async function editQuestion(params: EditQuestionParams) {
     return updatedQuestion;
   } catch (e) {
     console.log(e);
+  }
+}
+
+export async function getHotQuestions() {
+  try {
+    const hotQuestions = await prisma.question.findMany({
+      include: {
+        upvotes: true,
+        downvotes: true,
+      },
+      orderBy: [
+        {
+          views: "desc",
+        },
+        {
+          upvotes: {
+            _count: "desc",
+          },
+        },
+      ],
+      take: 5,
+    });
+    // console.log("Hot Questions Count:  ", hotQuestions.length);
+    return hotQuestions;
+  } catch (e) {
+    console.log(e);
+    throw new Error("Internal Server Error: getHotQuestions");
   }
 }

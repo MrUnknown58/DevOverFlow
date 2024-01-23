@@ -43,8 +43,6 @@ const Question = ({
   const pathname = usePathname();
   const parsedQuestionDetails = JSON.parse(questionDetails || "{}");
   const groupedTags = parsedQuestionDetails?.tags?.map((tag: any) => tag.name);
-  console.log(groupedTags);
-  console.log(groupedTags || []);
   const form = useForm<z.infer<typeof QuestionSchema>>({
     resolver: zodResolver(QuestionSchema),
     defaultValues: {
@@ -56,7 +54,6 @@ const Question = ({
 
   // 2. Define a submit handler.
   async function onSubmit(values: z.infer<typeof QuestionSchema>) {
-    console.log("Logging values from onSubmit  ", values);
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     setIsSubmitting(true);

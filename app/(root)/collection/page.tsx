@@ -6,17 +6,26 @@ import Filter from "@/components/shared/Filter";
 import { auth } from "@clerk/nextjs";
 import { getSavedQuestions } from "@/lib/actions/user.action";
 import { redirect } from "next/navigation";
+import { SearchParamsProps } from "@/types";
+import Pagination from "@/components/shared/Pagination";
 
-const Collections = async () => {
+const Collections = async ({ searchParams }: SearchParamsProps) => {
   const { userId } = auth();
   if (!userId) redirect("/");
-  const questions = await getSavedQuestions({ clerkId: userId });
+  const response = await getSavedQuestions({
+    clerkId: userId,
+    searchQuery: searchParams.q || "",
+    filter: searchParams.filter || "",
+    page: searchParams.page ? +searchParams.page : 1,
+  });
+  const questions = response?.questions;
+
   return (
     <>
-      <h1 className="h1-bold text-dark100_light900">All Questions</h1>
+      <h1 className="h1-bold text-dark100_light900">All Saved Questions</h1>
       <div className="mt-11 flex justify-between gap-5 max-sm:flex-col sm:items-center">
         <LocalSearchbar
-          route="/"
+          route="/collection"
           iconPosition="left"
           imgSrc="/assets/icons/search.svg"
           placeholder="Search for questions"
@@ -55,6 +64,12 @@ const Collections = async () => {
             linkText="Ask a Question"
           />
         )}
+      </div>
+      <div className="mt-10">
+        <Pagination
+          pageNumber={searchParams?.page ? +searchParams.page : 1}
+          isNext={response.isNext}
+        />
       </div>
     </>
   );
