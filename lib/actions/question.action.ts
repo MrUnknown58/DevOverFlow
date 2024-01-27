@@ -12,19 +12,6 @@ import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 export async function getQuestions(params: GetQuestionsParams) {
   try {
-    // const { page, pageSize, searchQuery, filter } = params;
-    // const questions = await prisma.question.findMany({
-    //   where: {
-    //     title: {
-    //       contains: searchQuery,
-    //     },
-    //   },
-    //   include: {
-    //     tags: true,
-    //   },
-    //   skip: (page - 1) * pageSize,
-    //   take: pageSize,
-    // });
     const { searchQuery, filter, page = 1, pageSize = 10 } = params;
     let order;
     if (filter) {
@@ -103,8 +90,6 @@ export async function getQuestions(params: GetQuestionsParams) {
 
 export async function createQuestion(question: CreateQuestionParams) {
   try {
-    // const questionId = await db.question.create(question);
-    // return questionId;
     const { title, content, tags, author, path } = question;
 
     const questionId = await prisma.question.create({
@@ -119,7 +104,14 @@ export async function createQuestion(question: CreateQuestionParams) {
       },
     });
     const tagIds = [];
+    let newtag = 0;
     for (const tag of tags) {
+      const oldtag = await prisma.tag.findFirst({
+        where: {
+          name: tag,
+        },
+      });
+      if (!oldtag) newtag += 1;
       const existingtag = await prisma.tag.upsert({
         where: {
           name: tag,
@@ -142,8 +134,6 @@ export async function createQuestion(question: CreateQuestionParams) {
       });
       tagIds.push(existingtag.id);
     }
-    // const newInteraction = await prisma.interaction.create({});
-    // console.log(tagIds);
     await prisma.question.update({
       where: {
         id: questionId.id,
@@ -154,11 +144,40 @@ export async function createQuestion(question: CreateQuestionParams) {
         },
       },
     });
-    // console.log(newQuestion);
+
+    await prisma.interaction.create({
+      data: {
+        question: {
+          connect: {
+            id: questionId.id,
+          },
+        },
+        user: {
+          connect: {
+            id: author,
+          },
+        },
+        tags: {
+          connect: tagIds.map((tagId) => ({ id: tagId })),
+        },
+        action: "ask_question",
+      },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: author,
+      },
+      data: {
+        reputation: {
+          increment: 5 + 4 * newtag,
+        },
+      },
+    });
     revalidatePath(path);
-    // return newQuestion;
   } catch (e) {
     console.log(e);
+    throw new Error("Internal Server Error: createQuestion");
   }
 }
 
@@ -293,6 +312,28 @@ export async function upvoteQuestion(params: QuestionVoteParams) {
     }
 
     // Increment author's reputation
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        reputation: {
+          increment: upvotes ? -1 : 1,
+        },
+      },
+    });
+
+    // Increment author's reputation by +10/-10 if the question is upvoted/reverted
+    await prisma.user.update({
+      where: {
+        id: Oldquestion.authorId,
+      },
+      data: {
+        reputation: {
+          increment: upvotes ? -10 : 10,
+        },
+      },
+    });
 
     revalidatePath(path);
   } catch (e) {
@@ -422,6 +463,28 @@ export async function downvoteQuestion(params: QuestionVoteParams) {
       });
       revalidatePath(path);
     }
+    // Increment author's reputation
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        reputation: {
+          increment: downvote ? 1 : -1,
+        },
+      },
+    });
+    // Increment author's reputation by +10/-10 if the question is upvoted/reverted
+    await prisma.user.update({
+      where: {
+        id: Oldquestion.authorId,
+      },
+      data: {
+        reputation: {
+          increment: downvote ? 10 : -10,
+        },
+      },
+    });
   } catch (e) {
     console.log(e);
     throw new Error("Internal Server Error: downvoteQuestion");

@@ -44,6 +44,16 @@ export async function viewQuestion(params: ViewQuestionParams) {
           action: "view",
         },
       });
+      await prisma.user.update({
+        where: {
+          id: userId,
+        },
+        data: {
+          reputation: {
+            increment: 2,
+          },
+        },
+      });
       // console.log("Updating question with new interaction");
       await prisma.question.update({
         where: {
