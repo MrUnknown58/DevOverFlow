@@ -7,6 +7,7 @@ import {
   GetQuestionByIdParams,
   GetQuestionsParams,
   QuestionVoteParams,
+  RecommendedParams,
 } from "./shared.types";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
@@ -661,5 +662,110 @@ export async function getHotQuestions() {
   } catch (e) {
     console.log(e);
     throw new Error("Internal Server Error: getHotQuestions");
+  }
+}
+
+export async function getRecommendedQuestions(params: RecommendedParams) {
+  try {
+    const { userId, page = 1, pageSize = 10, searchQuery } = params;
+    const skipAmt = (page - 1) * pageSize;
+    const user = await prisma.user.findFirst({
+      where: {
+        clerkId: userId,
+      },
+    });
+    if (!user) throw new Error("User not found: getRecommendedQuestions");
+    const userInteractions = await prisma.interaction.findMany({
+      where: {
+        userId: user.id,
+      },
+      include: {
+        tags: true,
+      },
+    });
+
+    const userTags = userInteractions.reduce((tags, interaction) => {
+      if (interaction.tags) {
+        // @ts-ignore
+        tags = tags.concat(interaction.tags);
+      }
+      return tags;
+    }, []);
+
+    const distinctUserTagIds = [
+      // @ts-ignore
+      ...new Set(userTags.map((tag: any) => tag.id)),
+    ];
+
+    const recommendedQuestions = await prisma.question.findMany({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            content: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
+        tags: {
+          some: {
+            id: {
+              in: distinctUserTagIds,
+            },
+          },
+        },
+        authorId: {
+          not: user.id,
+        },
+      },
+      include: {
+        tags: true,
+        answers: true,
+        upvotes: true,
+        downvotes: true,
+        author: true,
+      },
+      skip: skipAmt,
+      take: pageSize,
+    });
+    const totalQuestions = await prisma.question.count({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            content: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
+        tags: {
+          some: {
+            id: {
+              in: distinctUserTagIds,
+            },
+          },
+        },
+        authorId: {
+          not: user.id,
+        },
+      },
+    });
+
+    const isNext = totalQuestions > skipAmt + recommendedQuestions.length;
+    return { questions: recommendedQuestions, isNext };
+  } catch (e) {
+    console.log(e);
   }
 }

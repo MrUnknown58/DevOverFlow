@@ -6,11 +6,15 @@ import Pagination from "@/components/shared/Pagination";
 import LocalSearchbar from "@/components/shared/search/LocalSearchbar";
 import { Button } from "@/components/ui/button";
 import { HomePageFilters } from "@/constants/filters";
-import { getQuestions } from "@/lib/actions/question.action";
+import {
+  getQuestions,
+  getRecommendedQuestions,
+} from "@/lib/actions/question.action";
 import { SearchParamsProps } from "@/types";
 import Link from "next/link";
 
 import type { Metadata } from "next";
+import { auth } from "@clerk/nextjs";
 
 export const metadata: Metadata = {
   title: "AskMakers | Home",
@@ -18,11 +22,28 @@ export const metadata: Metadata = {
     "AskMakers is a Q&A platform for Makers. Ask questions, get answers, and share your knowledge with the community. Here, you can find all the questions and answers related to the maker community and products built by them and for them to help you build your next big thing.",
 };
 const Home = async ({ searchParams }: SearchParamsProps) => {
-  const results = await getQuestions({
-    filter: searchParams.filter,
-    searchQuery: searchParams.q || "",
-    page: searchParams.page ? +searchParams.page : 1,
-  });
+  let results;
+  const { userId } = auth();
+  if (searchParams?.filter === "recommended") {
+    if (userId) {
+      results = await getRecommendedQuestions({
+        userId,
+        searchQuery: searchParams.q || "",
+        page: searchParams.page ? +searchParams.page : 1,
+      });
+    } else {
+      results = {
+        questions: [],
+        isNext: false,
+      };
+    }
+  } else {
+    results = await getQuestions({
+      filter: searchParams.filter,
+      searchQuery: searchParams.q || "",
+      page: searchParams.page ? +searchParams.page : 1,
+    });
+  }
   const questions = results?.questions;
   // const isLoading = true;
   // if (isLoading) return <Loading />;
@@ -84,7 +105,7 @@ const Home = async ({ searchParams }: SearchParamsProps) => {
       <div className="mt-10">
         <Pagination
           pageNumber={searchParams?.page ? +searchParams.page : 1}
-          isNext={results.isNext}
+          isNext={results?.isNext || false}
         />
       </div>
     </>
