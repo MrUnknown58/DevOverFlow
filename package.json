@@ -24,6 +24,7 @@
     "@tailwindcss/typography": "^0.5.10",
     "@tinymce/tinymce-react": "^4.3.2",
     "@vercel/analytics": "^1.1.2",
+    "@vercel/speed-insights": "^1.0.8",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "eslint-config-prettier": "^9.1.0",
