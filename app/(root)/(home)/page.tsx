@@ -10,6 +10,13 @@ import { getQuestions } from "@/lib/actions/question.action";
 import { SearchParamsProps } from "@/types";
 import Link from "next/link";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "AskMakers | Home",
+  description:
+    "AskMakers is a Q&A platform for Makers. Ask questions, get answers, and share your knowledge with the community. Here, you can find all the questions and answers related to the maker community and products built by them and for them to help you build your next big thing.",
+};
 const Home = async ({ searchParams }: SearchParamsProps) => {
   const results = await getQuestions({
     filter: searchParams.filter,
@@ -17,6 +24,8 @@ const Home = async ({ searchParams }: SearchParamsProps) => {
     page: searchParams.page ? +searchParams.page : 1,
   });
   const questions = results?.questions;
+  // const isLoading = true;
+  // if (isLoading) return <Loading />;
   return (
     <>
       <div className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">

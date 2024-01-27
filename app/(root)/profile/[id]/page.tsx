@@ -11,6 +11,13 @@ import Stats from "@/components/shared/Stats";
 import QuestionsTab from "@/components/shared/QuestionsTab";
 import AnswersTab from "@/components/shared/AnswersTab";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Profile | AskMakers",
+  description: "Here, you can find all the user details.",
+};
+
 const Profile = async ({ params, searchParams }: URLProps) => {
   const userInfo = await getUserInfo({ userId: params.id });
   const { userId: clerkId } = auth();

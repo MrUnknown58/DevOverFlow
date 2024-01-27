@@ -5,6 +5,12 @@ import LocalSearchbar from "@/components/shared/search/LocalSearchbar";
 import { getQuestionsByTagID } from "@/lib/actions/tag.action";
 import { URLProps } from "@/types";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tags | AskMakers",
+  description: "Here, you can find all the tags.",
+};
 const TagDetails = async ({ params, searchParams }: URLProps) => {
   const results = await getQuestionsByTagID({
     tagId: params.id,
