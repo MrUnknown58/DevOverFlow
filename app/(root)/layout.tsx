@@ -3,6 +3,7 @@ import RightSidebar from "@/components/shared/RightSidebar";
 import Navbar from "@/components/shared/navbar/Navbar";
 import React from "react";
 import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/react";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -17,6 +18,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       </div>
       {/* <Toaster /> */}
       <Toaster richColors />
+      <Analytics />
     </main>
   );
 };
