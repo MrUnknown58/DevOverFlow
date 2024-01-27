@@ -9,6 +9,13 @@ import { redirect } from "next/navigation";
 import { SearchParamsProps } from "@/types";
 import Pagination from "@/components/shared/Pagination";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Collections | AskMakers",
+  description: "Here, you can find all the saved questions.",
+};
+
 const Collections = async ({ searchParams }: SearchParamsProps) => {
   const { userId } = auth();
   if (!userId) redirect("/");

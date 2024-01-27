@@ -11,6 +11,8 @@ import {
   UpdateUserParams,
 } from "./shared.types";
 import { revalidatePath } from "next/cache";
+import { BadgeCriteriaType } from "@/types";
+import { assignBadges } from "../utils";
 
 export async function getUserById({ userId }: GetUserByIdParams) {
   try {
@@ -352,7 +354,56 @@ export async function getUserInfo(params: GetUserByIdParams) {
         authorId: user.id,
       },
     });
-    return { user, totalQuestions, totalAnswers };
+    const questionUpvotes = await prisma.question.aggregate({
+      where: {
+        authorId: user.id,
+        upvoteId: {
+          isEmpty: false,
+        },
+      },
+      _count: {
+        upvoteId: true,
+      },
+    });
+    const answerUpvotes = await prisma.answer.aggregate({
+      where: {
+        authorId: user.id,
+        upvoteId: {
+          isEmpty: false,
+        },
+      },
+      _count: {
+        upvoteId: true,
+      },
+    });
+    const questionViews = await prisma.question.aggregate({
+      where: {
+        authorId: user.id,
+      },
+      _sum: {
+        views: true,
+      },
+    });
+    console.log(questionUpvotes, "     ", answerUpvotes, "    ", questionViews);
+    const criteria = [
+      { type: "QUESTION_COUNT" as BadgeCriteriaType, count: totalQuestions },
+      { type: "ANSWER_COUNT" as BadgeCriteriaType, count: totalAnswers },
+      {
+        type: "QUESTION_UPVOTES" as BadgeCriteriaType,
+        count: questionUpvotes?._count.upvoteId || 0,
+      },
+      {
+        type: "ANSWER_UPVOTES" as BadgeCriteriaType,
+        count: answerUpvotes?._count.upvoteId || 0,
+      },
+      {
+        type: "TOTAL_VIEWS" as BadgeCriteriaType,
+        count: questionViews?._sum.views || 0,
+      },
+    ];
+
+    const badgeCounts = assignBadges({ criteria });
+    return { user, totalQuestions, totalAnswers, badgeCounts };
   } catch (e) {
     console.log(e);
     throw e;
@@ -368,6 +419,9 @@ export async function getUserQuestions(params: GetUserStatsParams) {
         authorId: userId,
       },
       orderBy: [
+        {
+          createdAt: "desc",
+        },
         {
           views: "desc",
         },
@@ -467,26 +521,3 @@ export async function getUserAnswers(params: GetUserStatsParams) {
     throw e;
   }
 }
-
-// export async function updateUser(params: UpdateUserParams) {
-//   try {
-//     const { clerkId, updateData, path } = params;
-//     const { email, username, name, picture } = updateData;
-//     const updatedUser = await prisma.user.update({
-//       where: {
-//         clerkId,
-//       },
-//       data: {
-//         email,
-//         username,
-//         name,
-//         picture,
-//       },
-//     });
-//     revalidatePath(path);
-//     return updatedUser;
-//   } catch (e) {
-//     console.log(e);
-//     throw e;
-//   }
-// }

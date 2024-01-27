@@ -3,6 +3,13 @@ import { getUserById } from "@/lib/actions/user.action";
 import { auth } from "@clerk/nextjs";
 import React from "react";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Edit Profile | AskMakers",
+  description: "Here, you can edit your profile.",
+};
+
 const EditProfile = async () => {
   const { userId } = auth();
   if (!userId) return null;
