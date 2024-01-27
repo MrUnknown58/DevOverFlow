@@ -1,8 +1,10 @@
 import LeftSideBar from "@/components/shared/LeftSidebar";
 import RightSidebar from "@/components/shared/RightSidebar";
 import Navbar from "@/components/shared/navbar/Navbar";
-import { Toaster } from "@/components/ui/toaster";
 import React from "react";
+import { Toaster } from "sonner";
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -15,7 +17,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </section>
         <RightSidebar />
       </div>
-      <Toaster />
+      {/* <Toaster /> */}
+      <Toaster richColors />
+      <Analytics />
+      <SpeedInsights />
     </main>
   );
 };
