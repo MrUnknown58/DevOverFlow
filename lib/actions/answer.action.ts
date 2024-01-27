@@ -29,7 +29,7 @@ export async function createAnswer(params: CreateAnswerParams) {
       newAnswerIds.push(...questionInfo.answerIds, newAnswer.id);
     // Add the answer to the question's answers array
     // console.log(newAnswerIds);
-    await prisma.question.update({
+    const ques = await prisma.question.update({
       where: { id: question },
       data: {
         answerIds: newAnswerIds,
@@ -39,8 +39,47 @@ export async function createAnswer(params: CreateAnswerParams) {
           },
         },
       },
+      include: {
+        tags: true,
+      },
     });
     // Add interaction to the user's interactions array
+    await prisma.interaction.create({
+      data: {
+        question: {
+          connect: {
+            id: ques.id,
+          },
+        },
+        user: {
+          connect: {
+            id: author,
+          },
+        },
+        answer: {
+          connect: {
+            id: newAnswer.id,
+          },
+        },
+        action: "answer",
+        tags: {
+          connect: ques.tags.map((tag) => ({
+            id: tag.id,
+          })),
+        },
+      },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: author,
+      },
+      data: {
+        reputation: {
+          increment: 10,
+        },
+      },
+    });
 
     revalidatePath(path);
   } catch (err) {
@@ -168,7 +207,6 @@ export async function upvoteAnswer(params: AnswerVoteParams) {
           id: upvotes.id,
         },
       });
-      revalidatePath(path);
     } else {
       if (downvote) {
         await prisma.answer.update({
@@ -219,8 +257,30 @@ export async function upvoteAnswer(params: AnswerVoteParams) {
           },
         },
       });
-      revalidatePath(path);
     }
+
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        reputation: {
+          increment: upvotes ? -2 : 2,
+        },
+      },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: Oldanswer.authorId,
+      },
+      data: {
+        reputation: {
+          increment: upvotes ? -10 : 10,
+        },
+      },
+    });
+    revalidatePath(path);
   } catch (e) {
     console.log(e);
     throw e;
@@ -275,7 +335,6 @@ export async function downvoteAnswer(params: AnswerVoteParams) {
           id: downvotes.id,
         },
       });
-      revalidatePath(path);
     } else {
       if (upvote) {
         await prisma.answer.update({
@@ -326,8 +385,30 @@ export async function downvoteAnswer(params: AnswerVoteParams) {
           },
         },
       });
-      revalidatePath(path);
     }
+
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        reputation: {
+          increment: downvotes ? 2 : -2,
+        },
+      },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: Oldanswer.authorId,
+      },
+      data: {
+        reputation: {
+          increment: downvotes ? 10 : -10,
+        },
+      },
+    });
+    revalidatePath(path);
   } catch (e) {
     console.log(e);
     throw e;
