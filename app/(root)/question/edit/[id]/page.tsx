@@ -5,6 +5,12 @@ import { ParamsProps } from "@/types";
 import { auth } from "@clerk/nextjs";
 import { redirect } from "next/navigation";
 import React from "react";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Edit Question | AskMakers",
+  description: "Here, you can edit your question.",
+};
 
 const EditQuestion = async ({ params }: ParamsProps) => {
   const { userId } = auth();

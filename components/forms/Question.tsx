@@ -22,6 +22,7 @@ import Image from "next/image";
 import { createQuestion, editQuestion } from "@/lib/actions/question.action";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "@/context/ThemeProvider";
+import { toast } from "../ui/use-toast";
 
 // const type = "create";
 
@@ -66,6 +67,10 @@ const Question = ({
           questionId: parsedQuestionDetails.id,
           path: pathname,
         });
+        toast({
+          title: "Question Updated Successfully",
+          variant: "default",
+        });
         router.push(`/question/${parsedQuestionDetails.id}`);
       } else if (type === "create") {
         await createQuestion({
@@ -75,9 +80,18 @@ const Question = ({
           author: JSON.parse(userDetails),
           path: pathname,
         });
+        toast({
+          title: "Question Posted Successfully",
+          variant: "default",
+        });
         router.push("/");
       }
     } catch (e) {
+      console.log(e);
+      toast({
+        title: "Something went wrong",
+        variant: "destructive",
+      });
     } finally {
       setIsSubmitting(false);
     }

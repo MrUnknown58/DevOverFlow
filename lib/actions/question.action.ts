@@ -7,24 +7,12 @@ import {
   GetQuestionByIdParams,
   GetQuestionsParams,
   QuestionVoteParams,
+  RecommendedParams,
 } from "./shared.types";
 import { revalidatePath } from "next/cache";
 import { Prisma } from "@prisma/client";
 export async function getQuestions(params: GetQuestionsParams) {
   try {
-    // const { page, pageSize, searchQuery, filter } = params;
-    // const questions = await prisma.question.findMany({
-    //   where: {
-    //     title: {
-    //       contains: searchQuery,
-    //     },
-    //   },
-    //   include: {
-    //     tags: true,
-    //   },
-    //   skip: (page - 1) * pageSize,
-    //   take: pageSize,
-    // });
     const { searchQuery, filter, page = 1, pageSize = 10 } = params;
     let order;
     if (filter) {
@@ -103,8 +91,6 @@ export async function getQuestions(params: GetQuestionsParams) {
 
 export async function createQuestion(question: CreateQuestionParams) {
   try {
-    // const questionId = await db.question.create(question);
-    // return questionId;
     const { title, content, tags, author, path } = question;
 
     const questionId = await prisma.question.create({
@@ -119,7 +105,14 @@ export async function createQuestion(question: CreateQuestionParams) {
       },
     });
     const tagIds = [];
+    let newtag = 0;
     for (const tag of tags) {
+      const oldtag = await prisma.tag.findFirst({
+        where: {
+          name: tag,
+        },
+      });
+      if (!oldtag) newtag += 1;
       const existingtag = await prisma.tag.upsert({
         where: {
           name: tag,
@@ -142,8 +135,6 @@ export async function createQuestion(question: CreateQuestionParams) {
       });
       tagIds.push(existingtag.id);
     }
-    // const newInteraction = await prisma.interaction.create({});
-    // console.log(tagIds);
     await prisma.question.update({
       where: {
         id: questionId.id,
@@ -154,11 +145,40 @@ export async function createQuestion(question: CreateQuestionParams) {
         },
       },
     });
-    // console.log(newQuestion);
+
+    await prisma.interaction.create({
+      data: {
+        question: {
+          connect: {
+            id: questionId.id,
+          },
+        },
+        user: {
+          connect: {
+            id: author,
+          },
+        },
+        tags: {
+          connect: tagIds.map((tagId) => ({ id: tagId })),
+        },
+        action: "ask_question",
+      },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: author,
+      },
+      data: {
+        reputation: {
+          increment: 5 + 4 * newtag,
+        },
+      },
+    });
     revalidatePath(path);
-    // return newQuestion;
   } catch (e) {
     console.log(e);
+    throw new Error("Internal Server Error: createQuestion");
   }
 }
 
@@ -293,6 +313,28 @@ export async function upvoteQuestion(params: QuestionVoteParams) {
     }
 
     // Increment author's reputation
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        reputation: {
+          increment: upvotes ? -1 : 1,
+        },
+      },
+    });
+
+    // Increment author's reputation by +10/-10 if the question is upvoted/reverted
+    await prisma.user.update({
+      where: {
+        id: Oldquestion.authorId,
+      },
+      data: {
+        reputation: {
+          increment: upvotes ? -10 : 10,
+        },
+      },
+    });
 
     revalidatePath(path);
   } catch (e) {
@@ -422,6 +464,28 @@ export async function downvoteQuestion(params: QuestionVoteParams) {
       });
       revalidatePath(path);
     }
+    // Increment author's reputation
+    await prisma.user.update({
+      where: {
+        id: userId,
+      },
+      data: {
+        reputation: {
+          increment: downvote ? 1 : -1,
+        },
+      },
+    });
+    // Increment author's reputation by +10/-10 if the question is upvoted/reverted
+    await prisma.user.update({
+      where: {
+        id: Oldquestion.authorId,
+      },
+      data: {
+        reputation: {
+          increment: downvote ? 10 : -10,
+        },
+      },
+    });
   } catch (e) {
     console.log(e);
     throw new Error("Internal Server Error: downvoteQuestion");
@@ -598,5 +662,110 @@ export async function getHotQuestions() {
   } catch (e) {
     console.log(e);
     throw new Error("Internal Server Error: getHotQuestions");
+  }
+}
+
+export async function getRecommendedQuestions(params: RecommendedParams) {
+  try {
+    const { userId, page = 1, pageSize = 10, searchQuery } = params;
+    const skipAmt = (page - 1) * pageSize;
+    const user = await prisma.user.findFirst({
+      where: {
+        clerkId: userId,
+      },
+    });
+    if (!user) throw new Error("User not found: getRecommendedQuestions");
+    const userInteractions = await prisma.interaction.findMany({
+      where: {
+        userId: user.id,
+      },
+      include: {
+        tags: true,
+      },
+    });
+
+    const userTags = userInteractions.reduce((tags, interaction) => {
+      if (interaction.tags) {
+        // @ts-ignore
+        tags = tags.concat(interaction.tags);
+      }
+      return tags;
+    }, []);
+
+    const distinctUserTagIds = [
+      // @ts-ignore
+      ...new Set(userTags.map((tag: any) => tag.id)),
+    ];
+
+    const recommendedQuestions = await prisma.question.findMany({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            content: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
+        tags: {
+          some: {
+            id: {
+              in: distinctUserTagIds,
+            },
+          },
+        },
+        authorId: {
+          not: user.id,
+        },
+      },
+      include: {
+        tags: true,
+        answers: true,
+        upvotes: true,
+        downvotes: true,
+        author: true,
+      },
+      skip: skipAmt,
+      take: pageSize,
+    });
+    const totalQuestions = await prisma.question.count({
+      where: {
+        OR: [
+          {
+            title: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+          {
+            content: {
+              contains: searchQuery,
+              mode: "insensitive",
+            },
+          },
+        ],
+        tags: {
+          some: {
+            id: {
+              in: distinctUserTagIds,
+            },
+          },
+        },
+        authorId: {
+          not: user.id,
+        },
+      },
+    });
+
+    const isNext = totalQuestions > skipAmt + recommendedQuestions.length;
+    return { questions: recommendedQuestions, isNext };
+  } catch (e) {
+    console.log(e);
   }
 }

@@ -6,6 +6,12 @@ import { TagFilters } from "@/constants/filters";
 import { getAllTags } from "@/lib/actions/tag.action";
 import { SearchParamsProps } from "@/types";
 import Link from "next/link";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tags | AskMakers",
+  description: "Here, you can find all the tags.",
+};
 
 const Tags = async ({ searchParams }: SearchParamsProps) => {
   const response = await getAllTags({
