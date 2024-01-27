@@ -15,21 +15,36 @@ export async function getTopInterativeTags(params: GetTopInteractedTagsParams) {
         id: userId,
       },
     });
-    console.log(user);
-    return [
-      {
-        id: "1",
-        name: "tag1",
+    if (!user) throw new Error("User not found");
+    const userInteractions = await prisma.interaction.findMany({
+      where: {
+        userId: user.id,
       },
-      {
-        id: "2",
-        name: "tag1",
+      include: {
+        tags: true,
       },
-      {
-        id: "3",
-        name: "tag3",
-      },
-    ];
+    });
+
+    const userTags = userInteractions.reduce((tags, interaction) => {
+      if (interaction.tags) {
+        // @ts-ignore
+        tags = tags.concat(interaction.tags);
+      }
+      return tags;
+    }, []);
+
+    const tagCountMap = userTags.reduce((countMap: any, tag: any) => {
+      countMap.set(tag, (countMap.get(tag) || 0) + 1);
+      return countMap;
+    }, new Map());
+
+    const sortedTags = Array.from(tagCountMap.entries()).sort(
+      (a: any, b: any) => b[1] - a[1]
+    );
+
+    const top3Tags = sortedTags.slice(0, 3).map((tag: any) => tag[0]);
+
+    return top3Tags || [];
   } catch (e) {
     console.log(e);
     throw e;

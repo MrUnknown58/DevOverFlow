@@ -17,7 +17,7 @@ import { useState } from "react";
 import { ProfileSchema } from "@/lib/validations";
 import { usePathname, useRouter } from "next/navigation";
 import { updateUser } from "@/lib/actions/user.action";
-import { toast } from "../ui/use-toast";
+import { toast } from "sonner";
 interface ProfileProps {
   clerkId: string;
   user: string;
@@ -60,19 +60,23 @@ const Profile = ({ clerkId, user }: ProfileProps) => {
         path: pathname,
       });
       // Toast
-      toast({
-        title: "Profile Updated",
-        description: "Your profile has been updated.",
-        variant: "default",
-      });
+      // toast({
+      //   title: "Profile Updated",
+      //   description: "Your profile has been updated.",
+      //   variant: "default",
+      // });
+      toast.success("Profile Updated Successfully");
       router.back();
     } catch (e) {
       console.log(e);
-      toast({
-        title: "Error",
-        description: "Something went wrong. Please try again.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "Something went wrong. Please try again.",
+      //   variant: "destructive",
+      // });
+      toast.error(
+        "Something went wrong while updating Profile. Please try again."
+      );
     } finally {
       setIsSubmitting(false);
     }
