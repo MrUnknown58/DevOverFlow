@@ -17,7 +17,7 @@ import { Button } from "../ui/button";
 import Image from "next/image";
 import { createAnswer } from "@/lib/actions/answer.action";
 import { usePathname } from "next/navigation";
-import { toast } from "../ui/use-toast";
+import { toast } from "sonner";
 
 interface AnswerProps {
   question: string;
@@ -48,10 +48,13 @@ const Answer = ({ question, questionId, userId }: AnswerProps) => {
         path: pathname,
       });
       // Toast
-      toast({
-        title: "Answer Submitted",
-        description: "Your answer has been submitted.",
-        variant: "default",
+      // toast({
+      //   title: "Answer Submitted",
+      //   description: "Your answer has been submitted.",
+      //   variant: "default",
+      // });
+      toast.success("Answer Submitted Successfully", {
+        // description: "Your answer has been submitted.",
       });
       form.reset();
       if (editorRef.current) {
@@ -60,10 +63,13 @@ const Answer = ({ question, questionId, userId }: AnswerProps) => {
       }
     } catch (e) {
       console.log(e);
-      toast({
-        title: "Error",
+      // toast({
+      //   title: "Error",
+      //   description: "An error occurred while submitting your answer.",
+      //   variant: "destructive",
+      // });
+      toast.error("Something went wrong while Submitting your Answer", {
         description: "An error occurred while submitting your answer.",
-        variant: "destructive",
       });
       throw e;
     } finally {
@@ -95,18 +101,22 @@ const Answer = ({ question, questionId, userId }: AnswerProps) => {
       }
 
       // Toast
-      toast({
-        title: "AI Answer Generated",
-        description: "The AI has generated an answer for you.",
-        variant: "default",
+      // toast({
+      //   title: "AI Answer Generated",
+      //   description: "The AI has generated an answer for you.",
+      //   variant: "default",
+      // });
+      toast.success("AI Answer Generated Successfully", {
+        // description: "The AI has generated an answer for you.",
       });
     } catch (e) {
       console.log(e);
-      toast({
-        title: "Error",
-        description: "An error occurred while generating your answer.",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Error",
+      //   description: "An error occurred while generating your answer.",
+      //   variant: "destructive",
+      // });
+      toast.error("Something went wrong while generating your answer.");
       throw e;
     } finally {
       setIsSubmittingAI(false);
