@@ -10,7 +10,7 @@ import { formatNumber } from "@/lib/utils";
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { toast } from "../ui/use-toast";
+import { toast } from "sonner";
 
 interface VotesProps {
   type: "answer" | "question";
@@ -48,19 +48,19 @@ const Votes = ({
       userId: JSON.parse(userId),
       path: pathname,
     });
-    toast({
-      title: `Question ${
-        !hasSaved ? "Saved in" : "Removed from"
-      } your collection`,
-      variant: !hasSaved ? "default" : "destructive",
-    });
+    // toast({
+    //   title: `Question ${
+    //     !hasSaved ? "Saved in" : "Removed from"
+    //   } your collection`,
+    //   variant: !hasSaved ? "default" : "destructive",
+    // });
+    toast.success(
+      `Question ${!hasSaved ? "Saved in" : "Removed from"} your collection`
+    );
   };
   const handleVote = (vote: "upvote" | "downvote") => async () => {
     if (!userId)
-      return toast({
-        title: "Please Log in",
-        description: "You need to be logged in to vote",
-      });
+      return toast.error("You need to be logged in to vote on a question.");
     if (vote === "upvote") {
       if (type === "question") {
         await upvoteQuestion({
@@ -79,10 +79,7 @@ const Votes = ({
           path: pathname,
         });
       }
-      return toast({
-        title: `Upvote ${!hasUpvoted ? "Successful" : "Removed"}`,
-        variant: !hasUpvoted ? "default" : "destructive",
-      });
+      return toast.success(`Upvote ${!hasUpvoted ? "Successful" : "Removed"}`);
     } else if (vote === "downvote") {
       if (type === "question") {
         await downvoteQuestion({
@@ -101,10 +98,9 @@ const Votes = ({
           path: pathname,
         });
       }
-      return toast({
-        title: `Downvote ${!hasDownvoted ? "Successful" : "Removed"}`,
-        variant: !hasDownvoted ? "default" : "destructive",
-      });
+      return toast.success(
+        `Downvote ${!hasDownvoted ? "Successful" : "Removed"}`
+      );
     }
     // show a toast
   };

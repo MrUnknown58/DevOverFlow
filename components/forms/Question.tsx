@@ -22,7 +22,7 @@ import Image from "next/image";
 import { createQuestion, editQuestion } from "@/lib/actions/question.action";
 import { usePathname, useRouter } from "next/navigation";
 import { useTheme } from "@/context/ThemeProvider";
-import { toast } from "../ui/use-toast";
+import { toast } from "sonner";
 
 // const type = "create";
 
@@ -67,10 +67,11 @@ const Question = ({
           questionId: parsedQuestionDetails.id,
           path: pathname,
         });
-        toast({
-          title: "Question Updated Successfully",
-          variant: "default",
-        });
+        // toast({
+        //   title: "Question Updated Successfully",
+        //   variant: "default",
+        // });
+        toast.success("Question Updated Successfully");
         router.push(`/question/${parsedQuestionDetails.id}`);
       } else if (type === "create") {
         await createQuestion({
@@ -80,18 +81,20 @@ const Question = ({
           author: JSON.parse(userDetails),
           path: pathname,
         });
-        toast({
-          title: "Question Posted Successfully",
-          variant: "default",
-        });
+        // toast({
+        //   title: "Question Posted Successfully",
+        //   variant: "default",
+        // });
+        toast.success("Question Posted Successfully");
         router.push("/");
       }
     } catch (e) {
       console.log(e);
-      toast({
-        title: "Something went wrong",
-        variant: "destructive",
-      });
+      // toast({
+      //   title: "Something went wrong",
+      //   variant: "destructive",
+      // });
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
