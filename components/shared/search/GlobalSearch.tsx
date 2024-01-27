@@ -17,7 +17,6 @@ const GlobalSearch = () => {
 
   useEffect(() => {
     const handleOutsideClick = (e: any) => {
-      console.log(e);
       if (
         searchContainerRef.current &&
         // @ts-ignore
