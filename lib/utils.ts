@@ -1,6 +1,8 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-
+import qs from "query-string";
+import { BADGE_CRITERIA } from "@/constants";
+import { BadgeCounts } from "@/types";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -52,3 +54,94 @@ export const formatNumber = (number: number): string => {
     return number.toString();
   }
 };
+
+// get the javascript date object as a parameter and return a joined date
+export const getJoinedDate = (createdAt: Date): string => {
+  // const date = createdAt.getDate();
+  const month = createdAt.toLocaleString("default", { month: "long" });
+  const year = createdAt.getFullYear();
+  return `${month} ${year}`;
+};
+
+interface URlQueryParams {
+  params: string;
+  key: string;
+  value: string | null;
+}
+export const formUrlQuery = ({ params, key, value }: URlQueryParams) => {
+  const currUrl = qs.parse(params);
+  currUrl[key] = value;
+  return qs.stringifyUrl(
+    {
+      url: window.location.pathname,
+      query: currUrl,
+    },
+    { skipNull: true }
+  );
+};
+
+export const removeKeysFromQuery = ({
+  params,
+  keysToRemove,
+}: {
+  params: string;
+  keysToRemove: string[];
+}) => {
+  const currUrl = qs.parse(params);
+  keysToRemove.forEach((key) => delete currUrl[key]);
+  return qs.stringifyUrl(
+    {
+      url: window.location.pathname,
+      query: currUrl,
+    },
+    { skipNull: true }
+  );
+};
+
+interface assignBadgeProps {
+  criteria: {
+    type: keyof typeof BADGE_CRITERIA;
+    count: number;
+  }[];
+}
+export const assignBadges = (params: assignBadgeProps) => {
+  const badgeCounts: BadgeCounts = {
+    GOLD: 0,
+    SILVER: 0,
+    BRONZE: 0,
+  };
+  const { criteria } = params;
+  criteria.forEach((item) => {
+    const { type, count } = item;
+    const badgeLevels: any = BADGE_CRITERIA[type];
+    Object.keys(badgeLevels).forEach((level: any) => {
+      if (count >= badgeLevels[level]) {
+        badgeCounts[level as keyof BadgeCounts] += 1;
+      }
+    });
+  });
+  return badgeCounts;
+};
+
+export function processJobTitle(title: string | undefined | null): string {
+  if (title === undefined || title === null) {
+    return "No Job Title";
+  }
+
+  const words = title.split(" "); // 2 words
+
+  const validWords = words.filter((word) => {
+    return (
+      word !== undefined &&
+      word !== null &&
+      word.toLowerCase() !== "undefined" &&
+      word.toLowerCase() !== "null"
+    );
+  });
+
+  if (validWords.length === 0) {
+    return "No Job Title";
+  }
+
+  return validWords.join(" ");
+}

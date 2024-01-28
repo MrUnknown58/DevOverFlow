@@ -2,151 +2,51 @@ import QuestionCard from "@/components/cards/QuestionCard";
 import HomeFilters from "@/components/home/HomeFilters";
 import Filter from "@/components/shared/Filter";
 import NoResult from "@/components/shared/NoResult";
+import Pagination from "@/components/shared/Pagination";
 import LocalSearchbar from "@/components/shared/search/LocalSearchbar";
 import { Button } from "@/components/ui/button";
 import { HomePageFilters } from "@/constants/filters";
-import { getQuestions } from "@/lib/actions/question.action";
+import {
+  getQuestions,
+  getRecommendedQuestions,
+} from "@/lib/actions/question.action";
+import { SearchParamsProps } from "@/types";
 import Link from "next/link";
-import React from "react";
 
-// const questions = [
-//   {
-//     _id: "1",
-//     title: "How to use TypeScript?",
-//     description:
-//       "I'm new to TypeScript. Can anyone guide me on how to get started?",
-//     tags: [
-//       {
-//         _id: "1",
-//         name: "TypeScript",
-//       },
-//       {
-//         _id: "2",
-//         name: "JavaScript",
-//       },
-//     ],
-//     author: {
-//       _id: "1",
-//       name: "John Doe",
-//       picture: "https://example.com/john.jpg",
-//     },
-//     upvotes: 10,
-//     answersCount: 2,
-//     answers: [
-//       {
-//         _id: "1",
-//         text: "You can start by reading the TypeScript documentation.",
-//         author: {
-//           _id: "2",
-//           name: "Jane Doe",
-//           picture: "https://example.com/jane.jpg",
-//         },
-//       },
-//       {
-//         _id: "2",
-//         text: "There are also many great tutorials on YouTube.",
-//         author: {
-//           _id: "3",
-//           name: "Bob Smith",
-//           picture: "https://example.com/bob.jpg",
-//         },
-//       },
-//     ],
-//     views: 1500000,
-//     createdAt: new Date("2023-12-28T08:46:04.085Z"),
-//   },
-//   {
-//     _id: "2",
-//     title: "What is the difference between == and === in JavaScript?",
-//     description:
-//       "Can someone explain the difference between == and === in JavaScript?",
-//     tags: [
-//       {
-//         _id: "2",
-//         name: "JavaScript",
-//       },
-//     ],
-//     author: {
-//       _id: "2",
-//       name: "Jane Doe",
-//       picture: "https://example.com/jane.jpg",
-//     },
-//     upvotes: 20,
-//     answersCount: 3,
-//     answers: [
-//       {
-//         _id: "3",
-//         text: "== checks for equality with type coercion, while === checks for equality without type coercion.",
-//         author: {
-//           _id: "1",
-//           name: "John Doe",
-//           picture: "https://example.com/john.jpg",
-//         },
-//       },
-//       {
-//         _id: "4",
-//         text: "In other words, == will convert the operands to the same type before making the comparison, while === will not.",
-//         author: {
-//           _id: "3",
-//           name: "Bob Smith",
-//           picture: "https://example.com/bob.jpg",
-//         },
-//       },
-//       {
-//         _id: "5",
-//         text: "For example, '5' == 5 will return true, but '5' === 5 will return false.",
-//         author: {
-//           _id: "4",
-//           name: "Alice Johnson",
-//           picture: "https://example.com/alice.jpg",
-//         },
-//       },
-//     ],
-//     views: 200,
-//     createdAt: new Date(),
-//   },
-//   {
-//     _id: "3",
-//     title: "How can I make a POST request with Axios?",
-//     description:
-//       "I'm trying to make a POST request with Axios in a React app. Can anyone help?",
-//     tags: [
-//       {
-//         _id: "3",
-//         name: "React",
-//       },
-//       {
-//         _id: "4",
-//         name: "Axios",
-//       },
-//     ],
-//     author: {
-//       _id: "3",
-//       name: "Bob Smith",
-//       picture: "https://example.com/bob.jpg",
-//     },
-//     upvotes: 15,
-//     answersCount: 1,
-//     answers: [
-//       {
-//         _id: "6",
-//         text: "You can use the axios.post method. Here's an example: axios.post('/api/url', { data }).then(response => { console.log(response); }).catch(error => { console.log(error); });",
-//         author: {
-//           _id: "1",
-//           name: "John Doe",
-//           picture: "https://example.com/john.jpg",
-//         },
-//       },
-//     ],
-//     views: 150,
-//     createdAt: new Date(),
-//   },
-//   // More questions...
-// ];
+import type { Metadata } from "next";
+import { auth } from "@clerk/nextjs";
 
-const Home = async () => {
-  const questions = await getQuestions({});
-  // console.log(questions);
+export const metadata: Metadata = {
+  title: "AskMakers | Home",
+  description:
+    "AskMakers is a Q&A platform for Makers. Ask questions, get answers, and share your knowledge with the community. Here, you can find all the questions and answers related to the maker community and products built by them and for them to help you build your next big thing.",
+};
+const Home = async ({ searchParams }: SearchParamsProps) => {
+  let results;
+  const { userId } = auth();
+  if (searchParams?.filter === "recommended") {
+    if (userId) {
+      results = await getRecommendedQuestions({
+        userId,
+        searchQuery: searchParams.q || "",
+        page: searchParams.page ? +searchParams.page : 1,
+      });
+    } else {
+      results = {
+        questions: [],
+        isNext: false,
+      };
+    }
+  } else {
+    results = await getQuestions({
+      filter: searchParams.filter,
+      searchQuery: searchParams.q || "",
+      page: searchParams.page ? +searchParams.page : 1,
+    });
+  }
+  const questions = results?.questions;
+  // const isLoading = true;
+  // if (isLoading) return <Loading />;
   return (
     <>
       <div className="flex w-full flex-col-reverse justify-between gap-4 sm:flex-row sm:items-center">
@@ -201,6 +101,12 @@ const Home = async () => {
             linkText="Ask a Question"
           />
         )}
+      </div>
+      <div className="mt-10">
+        <Pagination
+          pageNumber={searchParams?.page ? +searchParams.page : 1}
+          isNext={results?.isNext || false}
+        />
       </div>
     </>
   );
