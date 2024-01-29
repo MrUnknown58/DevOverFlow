@@ -82,7 +82,7 @@ const QuestionCard = ({
           value={author.name}
           title={` - asked ${getTimeStamp(createdAt)}`}
           isAuthor
-          href={`/profile/${author.id}`}
+          href={`/profile/${author.clerkId}`}
           textStyles="body-medium text-dark400_light700"
         />
         <div className="flex items-center gap-3 max-sm:flex-wrap max-sm:justify-start">
