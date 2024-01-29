@@ -51,7 +51,7 @@ const Jobs = async ({ searchParams }: SearchParamsProps) => {
           </p>
         )}
       </div>
-      {jobs.length > 0 && (
+      {jobs && jobs.length > 0 && (
         <Pagination pageNumber={page} isNext={jobs.length === 10} />
       )}
     </>
