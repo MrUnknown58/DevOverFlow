@@ -12,5 +12,5 @@ export const GET = async (req: Request) => {
   console.log("Logging Location here: ", res);
   //   const geo = geoip.lookup(ip);
   //   return NextResponse.json(geo);
-  return NextResponse.json({ country_name: res.country_name });
+  return NextResponse.json({ country_name: res?.country_name || "India" });
 };
