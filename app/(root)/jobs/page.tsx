@@ -7,15 +7,15 @@ import { Job, SearchParamsProps } from "@/types";
 
 const Jobs = async ({ searchParams }: SearchParamsProps) => {
   // console.log(process.env.NEXT_PUBLIC_SERVER_URL);
-  const res = await fetch(
-    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/location`,
-    { cache: "no-cache" }
-  );
+  // const res = await fetch(
+  //   `${process.env.NEXT_PUBLIC_SERVER_URL}/api/location`,
+  //   { cache: "no-cache" }
+  // );
   // console.log(res);
-  const response = await res.json();
-  console.log("Logging here >>>>>>>....", response);
+  // const response = await res.json();
+  console.log("Logging here >>>>>>>....", "India");
   const userLocation = await getUserCountry({
-    location: { country: response?.country_name || "India" },
+    location: { country: "India" },
   });
   const query =
     searchParams.q && searchParams.filter
