@@ -15,7 +15,7 @@ const Jobs = async ({ searchParams }: SearchParamsProps) => {
   const response = await res.json();
   console.log("Logging here >>>>>>>....", response);
   const userLocation = await getUserCountry({
-    location: { country: response?.country_name },
+    location: { country: response?.country_name || "India" },
   });
   const query =
     searchParams.q && searchParams.filter
