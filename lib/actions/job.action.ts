@@ -1,3 +1,4 @@
+// import { revalidatePath } from "next/cache";
 import { JobFilterParams } from "./shared.types";
 
 interface cityInfo {
@@ -23,7 +24,7 @@ export async function getUserCountry() {
     if (a.name > b.name) return 1;
     return 0;
   });
-  console.log(cities);
+  // console.log(cities);
   return {
     userLocation: response,
     country: response.country_name,
@@ -47,6 +48,7 @@ export const fetchJobs = async (filters: JobFilterParams) => {
   );
 
   const result = await reponse.json();
-  console.log(result.data);
+  // console.log(result.data);
+  // revalidatePath("/jobs");
   return result.data;
 };

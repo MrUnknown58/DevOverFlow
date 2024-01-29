@@ -7,13 +7,16 @@ import { Job, SearchParamsProps } from "@/types";
 
 const Jobs = async ({ searchParams }: SearchParamsProps) => {
   const userLocation = await getUserCountry();
+  const query =
+    searchParams.q && searchParams.filter
+      ? `${searchParams.q}, ${searchParams.filter}`
+      : searchParams.q ||
+        searchParams.filter ||
+        `Software Engineer in ${userLocation.userLocation.country_name}`;
   const jobs = await fetchJobs({
     page: searchParams.page ? searchParams.page : "1",
-    query:
-      `${searchParams.q}, ${searchParams.location}` ??
-      `Software Engineer in ${userLocation.userLocation.country_name}`,
+    query,
   });
-
   const page = searchParams.page ? +searchParams.page : 1;
   return (
     <>
@@ -29,6 +32,7 @@ const Jobs = async ({ searchParams }: SearchParamsProps) => {
         <Filter
           filters={userLocation.cities}
           otherClasses={"min-h-[56px] sm:min-w-[170px]"}
+          userLocation={userLocation.userLocation.country_name}
         />
       </div>
 

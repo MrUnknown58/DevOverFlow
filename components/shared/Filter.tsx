@@ -1,5 +1,6 @@
 "use client";
-import React from "react";
+import React, { useCallback } from "react";
+
 import {
   Select,
   SelectContent,
@@ -9,29 +10,42 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { formUrlQuery } from "@/lib/utils";
-import { useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 interface FilterProps {
   filters: { name: string; value: string }[];
   otherClasses?: string;
   containerClasses?: string;
+  userLocation?: string;
 }
 const Filter = ({
   filters,
   otherClasses = "",
   containerClasses = "",
+  userLocation = "India",
 }: FilterProps) => {
   const searchParams = useSearchParams();
   const router = useRouter();
   const paramFilter = searchParams.get("filter") || "";
-  const handleUpdateParams = (value: string) => {
-    const newUrl = formUrlQuery({
-      params: searchParams.toString(),
-      key: "filter",
-      value,
-    });
-    router.push(newUrl, { scroll: false });
-  };
+  const pathname = usePathname();
+
+  // ...
+
+  const handleUpdateParams = useCallback(
+    (value: string) => {
+      const newUrl = formUrlQuery({
+        params: searchParams.toString(),
+        key: "filter",
+        value,
+      });
+      router.push(newUrl, { scroll: false });
+    },
+    [searchParams, router]
+  );
+
+  // useEffect(() => {
+  //   pathname === "/jobs" && handleUpdateParams(userLocation);
+  // }, [handleUpdateParams, userLocation, pathname]);
   return (
     <div className={`relative ${containerClasses}`}>
       {/* {filters.map((filter: any) => (
@@ -39,7 +53,9 @@ const Filter = ({
       ))} */}
       <Select
         onValueChange={handleUpdateParams}
-        defaultValue={paramFilter || undefined}
+        defaultValue={
+          paramFilter || pathname === "/jobs" ? userLocation : undefined
+        }
       >
         <SelectTrigger
           className={`${otherClasses} body-regular light-border background-light800_dark300 text-dark500_light700 border px-5 py-2.5`}
