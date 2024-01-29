@@ -12,7 +12,7 @@ const Jobs = async ({ searchParams }: SearchParamsProps) => {
       ? `${searchParams.q}, ${searchParams.filter}`
       : searchParams.q ||
         searchParams.filter ||
-        `Software Engineer in ${userLocation.userLocation.country_name}`;
+        `Software Engineer in ${userLocation.userLocation.country}`;
   const jobs = await fetchJobs({
     page: searchParams.page ? searchParams.page : "1",
     query,
@@ -32,7 +32,7 @@ const Jobs = async ({ searchParams }: SearchParamsProps) => {
         <Filter
           filters={userLocation.cities}
           otherClasses={"min-h-[56px] sm:min-w-[170px]"}
-          userLocation={userLocation.userLocation.country_name}
+          userLocation={userLocation.userLocation.country}
         />
       </div>
 

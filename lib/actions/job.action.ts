@@ -6,9 +6,12 @@ interface cityInfo {
   value: string;
 }
 export async function getUserCountry() {
-  const res = await fetch("https://ipapi.co/json/");
-  const response = await res.json();
-  console.log(response);
+  // const res = await fetch("https://ipapi.co/json/");
+  // const response = await res.json();
+  // console.log(response);
+  const response = await fetch("http://ip-api.com/json/?fields=country");
+  const location = await response.json();
+  console.log(location);
   // get cities from country
   const res1 = await fetch(
     "https://restcountries.com/v3.1/independent?status=true"
@@ -26,8 +29,8 @@ export async function getUserCountry() {
   });
   // console.log(cities);
   return {
-    userLocation: response,
-    country: response.country_name,
+    userLocation: location,
+    country: location.country,
     cities,
   };
 }
