@@ -6,7 +6,17 @@ import { fetchJobs, getUserCountry } from "@/lib/actions/job.action";
 import { Job, SearchParamsProps } from "@/types";
 
 const Jobs = async ({ searchParams }: SearchParamsProps) => {
-  const userLocation = await getUserCountry();
+  // console.log(process.env.NEXT_PUBLIC_SERVER_URL);
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SERVER_URL}/api/location`,
+    { cache: "no-cache" }
+  );
+  // console.log(res);
+  const response = await res.json();
+  console.log("Logging here >>>>>>>....", response);
+  const userLocation = await getUserCountry({
+    location: { country: response?.country_name },
+  });
   const query =
     searchParams.q && searchParams.filter
       ? `${searchParams.q}, ${searchParams.filter}`

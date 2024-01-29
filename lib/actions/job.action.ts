@@ -1,17 +1,26 @@
 // import { revalidatePath } from "next/cache";
+import process from "process";
 import { JobFilterParams } from "./shared.types";
 
 interface cityInfo {
   name: string;
   value: string;
 }
-export async function getUserCountry() {
+interface UserCountryProps {
+  location: {
+    country: string;
+  };
+}
+export async function getUserCountry({ location }: UserCountryProps) {
   // const res = await fetch("https://ipapi.co/json/");
   // const response = await res.json();
   // console.log(response);
-  const response = await fetch("http://ip-api.com/json/?fields=country");
-  const location = await response.json();
-  console.log(location);
+  // const response = await fetch("http://ip-api.com/json/?fields=country");
+  // const location = await response.json();
+  // console.log(location);
+  // const location = {
+  //   country: "India",
+  // };
   // get cities from country
   const res1 = await fetch(
     "https://restcountries.com/v3.1/independent?status=true"
